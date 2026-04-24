@@ -1,100 +1,165 @@
 import json
 import os
-from openai import OpenAI
+from typing import Any, Dict, List
 
-INDIA_TAX_SYSTEM_PROMPT = """
-You are Nuvest's AI investment copilot for Indian retail investors.
-Always answer in the context of Indian tax rules:
+try:
+    from groq import Groq
+    _groq_available = True
+except ImportError:
+    _groq_available = False
 
-- STCG (Short Term Capital Gains): equity held < 12 months, taxed at 20%
-- LTCG (Long Term Capital Gains): equity held > 12 months, taxed at 12.5%
-  above ₹1 lakh exemption per FY
-- ELSS: qualifies for 80C deduction up to ₹1.5L total limit
-- PPF: qualifies for 80C, EEE status (exempt-exempt-exempt)
+GROQ_MODEL = "llama3-70b-8192"
+
+INDIA_TAX_SYSTEM_PROMPT = """You are Nuvest's AI investment copilot for Indian retail investors.
+Always answer with Indian tax rules in mind:
+
+- STCG: equity held < 12 months, taxed at 20%
+- LTCG: equity held > 12 months, taxed at 12.5% above ₹1 lakh exemption per FY
+- ELSS: 80C deduction up to ₹1.5L total limit (lock-in 3 years)
+- PPF: 80C, EEE status (all three stages tax-exempt)
 - NPS Tier I: 80CCD(1B) gives additional ₹50K deduction beyond 80C limit
 - SGB: capital gains exempt if held to maturity (8 years)
 - Indexation: available for debt funds purchased before April 2023
 
-When asked about rebalancing, always consider the March 31 fiscal year-end.
-Keep answers concise, under 100 words. Never give specific buy/sell advice on
-individual stocks — frame as educational guidance only.
-"""
+FY runs April 1 – March 31. When answering, always use rupee amounts (₹) and
+be specific to the user's portfolio context provided. Keep answers under 120 words.
+Never give specific buy/sell advice on individual stocks — frame as educational guidance only."""
 
-_grok_client = None  # OpenAI | None
+SETTLEMENT_SYSTEM_PROMPT = """You are Nuvest's post-settlement investment advisor.
+A user just received funds from an invoice settlement on the Nuvest platform.
+Suggest how they should redeploy the funds across:
+1. More invoice tokens on Nuvest (12–18% annualised yield)
+2. ELSS SIP top-up if 80C limit is unfilled
+3. Debt fund or liquid fund for emergency buffer
+4. NPS if 80CCD(1B) ₹50K limit is unused
+
+Keep the suggestion under 100 words. Use rupee amounts. Be specific and actionable."""
+
+_client = None
 
 
 def _get_client():
-    global _grok_client
-    if _grok_client is not None:
-        return _grok_client
-    api_key = os.getenv("GROK_API_KEY")
+    global _client
+    if _client is not None:
+        return _client
+    if not _groq_available:
+        return None
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
     if not api_key:
         return None
-    _grok_client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
-    return _grok_client
+    _client = Groq(api_key=api_key)
+    return _client
 
 
-def run_ai_chat(message: str, holdings_context: dict) -> str:
+def run_chat(message: str, portfolio_summary: Dict[str, Any], history: List[Dict]) -> str:
     client = _get_client()
     if client is None:
-        return _mock_response(message, holdings_context)
+        return _mock_chat_response(message, portfolio_summary)
 
-    context_str = f"User holdings summary: {json.dumps(holdings_context)}"
-    response = client.chat.completions.create(
-        model="grok-beta",
-        messages=[
-            {"role": "system", "content": INDIA_TAX_SYSTEM_PROMPT},
-            {"role": "user", "content": f"{context_str}\n\nQuestion: {message}"},
-        ],
-        max_tokens=200,
+    context_str = (
+        f"User portfolio summary: {json.dumps(portfolio_summary, default=str)}"
     )
-    return response.choices[0].message.content
+    system_with_context = f"{INDIA_TAX_SYSTEM_PROMPT}\n\n{context_str}"
+
+    recent_history = history[-6:] if len(history) > 6 else history
+    messages = [{"role": "system", "content": system_with_context}]
+    for turn in recent_history:
+        role = turn.get("role", "user")
+        content = turn.get("content", "")
+        if role in ("user", "assistant") and content:
+            messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": message})
+
+    resp = client.chat.completions.create(
+        model=GROQ_MODEL,
+        messages=messages,
+        max_tokens=250,
+        temperature=0.4,
+    )
+    return resp.choices[0].message.content
 
 
-def _mock_response(message: str, holdings_context: dict) -> str:
+def settlement_advice(
+    payout_amount: float,
+    investor_address: str,
+    invoice_id: int,
+    portfolio_summary: Dict[str, Any],
+) -> Dict[str, Any]:
+    payout_inr = round(payout_amount)
+    client = _get_client()
+
+    if client is None:
+        advice_text = (
+            f"₹{payout_inr:,} credited. Consider reinvesting ₹{int(payout_inr * 0.6):,} "
+            f"in new invoice tokens for continued 12–18% yield, and ₹{int(payout_inr * 0.4):,} "
+            f"in an ELSS SIP to fill any remaining 80C gap."
+        )
+    else:
+        remaining_80c = portfolio_summary.get("remaining_80c", 0)
+        context_str = (
+            f"Investor received ₹{payout_inr:,} from invoice #{invoice_id} settlement. "
+            f"Investor wallet: {investor_address}. "
+            f"Remaining 80C capacity: ₹{remaining_80c:,}. "
+            f"Portfolio summary: {json.dumps(portfolio_summary, default=str)}"
+        )
+        resp = client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": SETTLEMENT_SYSTEM_PROMPT},
+                {"role": "user", "content": context_str},
+            ],
+            max_tokens=200,
+            temperature=0.4,
+        )
+        advice_text = resp.choices[0].message.content
+
+    return {
+        "notification": f"Invoice #{invoice_id} settled — ₹{payout_inr:,} credited to your wallet.",
+        "advice": advice_text,
+        "invoice_id": invoice_id,
+        "payout_inr": payout_inr,
+    }
+
+
+# kept for backward compatibility
+def run_ai_chat(message: str, holdings_context: dict) -> str:
+    return run_chat(message, holdings_context, [])
+
+
+def _mock_chat_response(message: str, portfolio_summary: dict) -> str:
     msg = message.lower()
-    elss = holdings_context.get("elss_invested", 0)
-    ppf = holdings_context.get("ppf_invested", 0)
-    ltcg = holdings_context.get("ltcg_this_fy", 0)
-    remaining_80c = max(0, 150000 - elss - ppf)
+    elss = portfolio_summary.get("elss_invested", 0)
+    ppf = portfolio_summary.get("ppf_invested", 0)
+    ltcg = portfolio_summary.get("ltcg_this_fy", 0)
+    remaining_80c = portfolio_summary.get("remaining_80c", max(0, 150000 - elss - ppf))
 
     if "elss" in msg or "80c" in msg:
         if remaining_80c > 0:
             return (
-                f"You've used ₹{elss + ppf:,} of your ₹1.5L 80C limit. "
-                f"You can still invest ₹{remaining_80c:,} in ELSS before March 31 "
-                f"to maximise your deduction and save up to ₹{int(remaining_80c * 0.30):,} in tax."
+                f"You've used ₹{elss + ppf:,.0f} of your ₹1.5L 80C limit. "
+                f"Invest ₹{remaining_80c:,.0f} in ELSS before March 31 "
+                f"to save up to ₹{int(remaining_80c * 0.30):,} in tax."
             )
         return "Your ₹1.5L 80C limit is fully utilised. Consider NPS Tier I for an additional ₹50K deduction under 80CCD(1B)."
 
     if "ltcg" in msg or "long term" in msg:
-        exempt = 100000
-        taxable = max(0, ltcg - exempt)
+        taxable = max(0, ltcg - 100000)
         return (
-            f"Your LTCG this FY is ₹{ltcg:,}. "
-            f"₹1L is exempt — taxable gain is ₹{taxable:,}, "
+            f"Your LTCG this FY is ₹{ltcg:,.0f}. "
+            f"₹1L is exempt — taxable gain ₹{taxable:,.0f}, "
             f"tax liability ₹{int(taxable * 0.125):,} at 12.5%."
         )
 
     if "rebalanc" in msg:
-        equity_pct = holdings_context.get("equity_pct", 0.6)
-        if equity_pct > 0.65:
-            overshoot = round((equity_pct - 0.60) * 100)
+        eq = portfolio_summary.get("equity_pct", 0.6)
+        if eq > 0.65:
             return (
-                f"Your equity allocation is {round(equity_pct*100)}% — {overshoot}pp above target. "
-                f"Consider moving some equity to debt before March 31 to rebalance and lock in LTCG within the ₹1L exempt limit."
+                f"Equity at {round(eq * 100)}% — {round((eq - 0.60) * 100)}pp above target. "
+                f"Move some to debt before March 31 to rebalance and stay within LTCG exemption."
             )
-        return "Your allocation looks balanced. No urgent rebalancing needed before March 31."
-
-    if "sell" in msg or "nifty" in msg or "sip" in msg:
-        return (
-            "Check the purchase date before selling. If held > 12 months, gains are taxed as LTCG at 12.5% "
-            "(₹1L exempt per FY). If < 12 months, STCG applies at 20%. "
-            "Consider timing the sale after crossing the 12-month mark if you're close."
-        )
+        return "Allocation looks balanced. No urgent rebalancing needed before March 31."
 
     return (
         "I'm your Nuvest tax copilot. Ask me about your 80C gap, LTCG exposure, "
-        "rebalancing before March 31, or SIP allocation. "
-        "(Note: GROK_API_KEY not set — running in demo mode.)"
+        "rebalancing, or SIP allocation. (Demo mode — set GROQ_API_KEY for live AI.)"
     )

@@ -5,11 +5,14 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Any, Optional
+from typing import Any, Optional, List
 
 from model import InvoiceInput, run_scoring
-from portfolio import get_holdings, compute_summary, generate_alerts
-from ai_chat import run_ai_chat
+from portfolio import (
+    get_holdings, get_summary, get_alerts,
+    get_kite_login_url, get_kite_access_token, set_kite_access_token,
+)
+from ai_chat import run_chat, settlement_advice
 
 app = FastAPI(title="Nuvest API", version="1.0.0")
 
@@ -40,6 +43,26 @@ def score_invoice_endpoint(invoice: InvoiceInput):
         raise HTTPException(status_code=422, detail=str(e))
 
 
+# ── Kite Connect OAuth ────────────────────────────────────────────────────────
+
+@app.get("/kite/login-url")
+def kite_login_url():
+    url = get_kite_login_url()
+    if not url:
+        raise HTTPException(status_code=503, detail="KITE_API_KEY not configured")
+    return {"url": url}
+
+
+@app.get("/kite/callback")
+def kite_callback(request_token: str):
+    try:
+        token_data = get_kite_access_token(request_token)
+        set_kite_access_token(token_data["access_token"])
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 # ── Portfolio ─────────────────────────────────────────────────────────────────
 
 @app.get("/portfolio/holdings")
@@ -50,26 +73,54 @@ def portfolio_holdings(user_id: str = "demo_user"):
 
 @app.get("/portfolio/summary")
 def portfolio_summary(user_id: str = "demo_user"):
+    summary = get_summary(user_id)
+    alerts = get_alerts(summary)
     holdings = get_holdings(user_id)
-    summary = compute_summary(holdings)
-    alerts = generate_alerts(summary)
-    return {"summary": summary, "alerts": alerts}
+    return {"summary": summary, "alerts": alerts, "holdings": holdings}
 
 
 # ── AI Chat ───────────────────────────────────────────────────────────────────
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
-    holdings_context: Optional[dict[str, Any]] = {}
+    user_id: str = "demo_user"
+    history: Optional[List[ChatMessage]] = []
+    holdings_context: Optional[dict[str, Any]] = None
 
 
 @app.post("/portfolio/chat")
 def portfolio_chat(payload: ChatRequest):
-    context = payload.holdings_context or {}
-    if not context:
-        from portfolio import get_holdings, compute_summary
-        holdings = get_holdings("demo_user")
-        context = compute_summary(holdings)
+    summary = payload.holdings_context
+    if not summary:
+        summary = get_summary(payload.user_id)
 
-    reply = run_ai_chat(payload.message, context)
-    return {"reply": reply}
+    history = [{"role": m.role, "content": m.content} for m in (payload.history or [])]
+    reply = run_chat(payload.message, summary, history)
+    return {"response": reply}
+
+
+# ── Invoice settlement advice ─────────────────────────────────────────────────
+
+class SettlementRequest(BaseModel):
+    invoice_id: int
+    investor_address: str
+    payout_wei: int
+    invoice_amount_inr: float
+
+
+@app.post("/invoice/settlement")
+def invoice_settlement(payload: SettlementRequest):
+    payout_inr = payload.invoice_amount_inr * 0.99
+    summary = get_summary("demo_user")
+    result = settlement_advice(
+        payout_amount=payout_inr,
+        investor_address=payload.investor_address,
+        invoice_id=payload.invoice_id,
+        portfolio_summary=summary,
+    )
+    return result

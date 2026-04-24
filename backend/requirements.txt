@@ -1,9 +1,9 @@
 fastapi
-uvicorn[standard]
+uvicorn
 kiteconnect
+groq
 xgboost
 shap
-openai
 python-dotenv
 httpx
 pydantic>=2.0

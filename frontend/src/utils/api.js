@@ -1,4 +1,4 @@
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_API_URL || 'http://localhost:8001'
 
 async function post(path, body) {
   const res = await fetch(`${BASE}${path}`, {
@@ -28,16 +28,28 @@ export async function scoreInvoice({ buyer_name, invoice_amount, due_days, sme_h
   })
 }
 
-export async function getHoldings(userId = 'demo') {
+export async function getHoldings(userId = 'demo_user') {
   return get('/portfolio/holdings', { user_id: userId })
 }
 
-export async function getPortfolioSummary(userId = 'demo') {
+export async function fetchSummary(userId = 'demo_user') {
   return get('/portfolio/summary', { user_id: userId })
 }
 
+// alias kept for existing callers
+export const getPortfolioSummary = fetchSummary
+
+export async function sendChatMessage(message, userId = 'demo_user', history = []) {
+  return post('/portfolio/chat', { message, user_id: userId, history })
+}
+
+// alias kept for existing callers
 export async function chatWithCopilot(message, holdingsContext = {}) {
   return post('/portfolio/chat', { message, holdings_context: holdingsContext })
+}
+
+export async function postSettlement({ invoice_id, investor_address, payout_wei, invoice_amount_inr }) {
+  return post('/invoice/settlement', { invoice_id, investor_address, payout_wei, invoice_amount_inr })
 }
 
 export async function healthCheck() {
