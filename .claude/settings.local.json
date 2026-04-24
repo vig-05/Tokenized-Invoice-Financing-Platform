@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(pip install *)",
+      "Bash(uvicorn app:app --reload --port 8000)",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s http://localhost:8000/portfolio/summary)",
+      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60,\\\\\"sme_name\\\\\":\\\\\"Sri Lakshmi Textiles\\\\\",\\\\\"sme_history_count\\\\\":6}\")",
+      "Bash(python -m uvicorn app:app --reload --port 8000)",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:8000/portfolio/chat -H \"Content-Type: application/json\" -d \"{\\\\\"message\\\\\":\\\\\"How much ELSS can I still add for 80C?\\\\\"}\")",
+      "PowerShell(Stop-Process -Name node -Force -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Name python -Force -ErrorAction SilentlyContinue)",
+      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer_name\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60}\")",
+      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"sme_name\\\\\":\\\\\"SME\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60,\\\\\"sme_history_count\\\\\":3,\\\\\"sme_default_rate\\\\\":0}\")"
     ]
   }
 }
