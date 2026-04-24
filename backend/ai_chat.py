@@ -8,7 +8,7 @@ try:
 except ImportError:
     _groq_available = False
 
-GROQ_MODEL = "llama3-70b-8192"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 INDIA_TAX_SYSTEM_PROMPT = """You are Nuvest's AI investment copilot for Indian retail investors.
 Always answer with Indian tax rules in mind:

@@ -4,7 +4,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { fetchSummary, sendChatMessage } from '../utils/api'
 
 const LS_KEY   = 'nuvest_kite_connected'
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 const POLL_SUM  = 60_000
 const POLL_LIVE = 30_000
 
