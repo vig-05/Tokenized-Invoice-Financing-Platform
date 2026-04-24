@@ -80,7 +80,7 @@ h1, .hero h1, .hero-h1, .section-title { font-weight: 800 !important; }
   padding: 8px 14px;
   border: 1px solid var(--line-2); border-radius: 999px;
   background: rgba(255,255,255,0.02);
-  margin-bottom: 34px;
+  margin-bottom: 18px;
 }
 .eyebrow .dot {
   width: 6px; height: 6px; border-radius: 50%;
@@ -100,30 +100,32 @@ h1, .hero h1, .hero-h1, .section-title { font-weight: 800 !important; }
 }
 .hero-h1 .w {
   display: inline-block;
-  opacity: 0;
-  transform: translateX(var(--dx, 0)) translateY(8px);
-  transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1);
-  will-change: transform, opacity;
+  opacity: 1;
+  transform: none;
+  transition: none;
+  will-change: auto;
 }
-.hero-h1 .w[data-dir="l"] { --dx: -140px; }
-.hero-h1 .w[data-dir="r"] { --dx: 140px; }
-.hero-h1 .w.in { opacity: 1; transform: translateX(0) translateY(0); }
+.hero-h1 .w[data-dir="l"] { --dx: 0; }
+.hero-h1 .w[data-dir="r"] { --dx: 0; }
+.hero-h1 .w.in { opacity: 1; transform: none; }
 .hero h1 em, .hero-h1 em { font-style: italic; color: var(--ink-1); font-weight: 300; }
 .hero h1 .accent, .hero-h1 .accent { color: var(--accent-2); font-style: italic; }
 
 .hero p.lead {
   font-size: 17px; line-height: 1.55;
   color: var(--ink-2);
-  max-width: 52ch; margin: 0 auto 44px;
+  max-width: 52ch; margin: 340px auto 44px;
+  position: relative; z-index: 3;
 }
 
 .hero-orb-wrap {
-  position: relative;
-  width: min(920px, 110vw);
-  height: min(920px, 110vw);
-  margin: 0 auto 40px;
-  margin-top: -60px;
-  pointer-events: auto;
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -78%);
+  width: min(980px, 116vw);
+  height: min(980px, 116vw);
+  margin: 0;
+  pointer-events: none;
   z-index: 0;
 }
 #numberSphere {
@@ -131,11 +133,34 @@ h1, .hero h1, .hero-h1, .section-title { font-weight: 800 !important; }
   width: 100%; height: 100%;
   cursor: grab;
   touch-action: none;
+  pointer-events: auto;
 }
 #numberSphere:active { cursor: grabbing; }
 .hero { position: relative; z-index: 1; }
 .hero .eyebrow, .hero h1, .hero-h1, .hero p.lead, .hero .cta-row { position: relative; z-index: 2; }
 section:not(.hero), footer { position: relative; z-index: 5; background: transparent; }
+
+/* ── ORB RING ───────────────────────────────────────── */
+.orb-ring {
+  position: absolute; inset: -2%;
+  border-radius: 50%;
+  border: 1px solid rgba(122,162,255,0.18);
+  box-shadow:
+    0 0 0 1px rgba(91,140,255,0.08),
+    0 0 80px 20px rgba(59,95,212,0.22),
+    inset 0 0 60px 10px rgba(59,95,212,0.12);
+  animation: orbRingSpin 60s linear infinite;
+  pointer-events: none;
+}
+.orb-ring::before {
+  content: ""; position: absolute; top: -5px; left: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 16px var(--accent-2), 0 0 6px rgba(255,255,255,0.8);
+  transform: translateX(-50%);
+}
+@keyframes orbRingSpin { to { transform: rotate(360deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
 .btn {

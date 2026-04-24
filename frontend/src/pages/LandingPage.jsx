@@ -150,17 +150,13 @@ export default function LandingPage() {
     window.__heroScroll = 0
     function onScrollHero() {
       const y = window.scrollY, vh = window.innerHeight
-      const p = Math.min(1.4, Math.max(0, y / (vh * 0.9)))
+      const p = Math.min(1.4, Math.max(0, y / (vh * 1.6)))
       window.__heroScroll = p
       if (orbWrap) {
-        orbWrap.style.transform = `translateY(${y * 0.18}px)`
-        orbWrap.style.opacity = Math.max(0, 1 - p * 0.85)
+        orbWrap.style.transform = `translate(-50%, calc(-78% + ${y * 0.09}px))`
+        orbWrap.style.opacity = Math.max(0, 1 - Math.max(0, (p - 0.25)) * 1.1)
       }
-      const progress = Math.min(1, Math.max(0, y / (vh * 0.75)))
-      heroWords.forEach((w, i) => {
-        const trigger = 0.04 + (i / Math.max(1, heroWords.length - 1)) * 0.75
-        w.classList.toggle('in', progress >= trigger)
-      })
+      heroWords.forEach(w => w.classList.add('in'))
     }
     window.addEventListener('scroll', onScrollHero, { passive: true })
     requestAnimationFrame(() => setTimeout(onScrollHero, 60))
@@ -208,6 +204,7 @@ export default function LandingPage() {
     document.addEventListener('pointermove', handler, { passive: true })
     return () => document.removeEventListener('pointermove', handler)
   }, [])
+
 
   // Number sphere canvas
   useEffect(() => {
@@ -334,14 +331,14 @@ export default function LandingPage() {
       rendered.sort((a, b) => a.z - b.z)
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
       for (const { p, sx, sy, z, persp } of rendered) {
-        const alpha = Math.max(0.08, (z + 1) * 0.5)
+        const alpha = Math.max(0.35, (z + 1) * 0.5)
         ctx.font = `500 ${p.size * persp}px 'Manrope', 'Inter', sans-serif`
         if (p.accent) {
           ctx.fillStyle = `${accent2}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
           ctx.shadowColor = accent; ctx.shadowBlur = 12 * alpha
         } else {
-          const v = Math.round(180 + 75 * alpha)
-          ctx.fillStyle = `rgba(${v},${v + 10},255,${alpha})`; ctx.shadowBlur = 0
+          const v = Math.round(200 + 45 * alpha)
+          ctx.fillStyle = `rgba(${v},${v + 10},255,${Math.min(1, alpha + 0.05)})`; ctx.shadowBlur = 0
         }
         ctx.fillText(p.label, sx, sy)
       }
@@ -379,10 +376,10 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className="hero">
-        <div className="hero-orb-wrap" aria-hidden="true">
+        <div className="hero-orb-wrap" aria-hidden="false">
           <canvas id="numberSphere" ref={canvasRef} />
+          <div className="orb-ring" />
         </div>
-        <div className="eyebrow"><span className="dot" />AI + Blockchain · Trade Finance for India</div>
         <h1 className="hero-h1">
           <span className="w" data-dir="l">AI</span>{' '}
           <span className="w" data-dir="r">investing</span>{' '}
@@ -394,6 +391,7 @@ export default function LandingPage() {
           Nuvest is two products in one platform — an AI portfolio copilot for 80M+ Indian retail investors,
           and a blockchain-settled invoice financing marketplace that unlocks working capital for 63M+ MSMEs.
         </p>
+        <div className="eyebrow"><span className="dot" />AI + Blockchain · Trade Finance for India</div>
         <div className="cta-row">
           <button className="btn primary" onClick={openOnboard} style={{ color: 'rgba(5,5,5,0.95)' }}>
             Get Started
