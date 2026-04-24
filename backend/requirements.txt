@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+kiteconnect
+xgboost
+shap
+openai
+python-dotenv
+httpx
+pydantic>=2.0
