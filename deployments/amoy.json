@@ -1,0 +1,8 @@
+{
+  "network": "amoy",
+  "chainId": 80002,
+  "deployer": "0x2126B1Aed35Ea8Ca728c69c22E3eF4c819265d77",
+  "deployedAt": "2026-04-24T08:45:43.299Z",
+  "InvoiceToken": "0x9039ada3C6e1FcEb8c05Af9Ea7e45771580042DF",
+  "InvoiceEscrow": "0x2DBbc84b6455bc1F8F0e9aF715503330DECeCC6c"
+}
