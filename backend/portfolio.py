@@ -2,6 +2,8 @@ import time
 import os
 from typing import Any, Dict, List
 
+from typing import Optional
+
 try:
     from kiteconnect import KiteConnect
     _kite_available = True
@@ -10,6 +12,7 @@ except ImportError:
 
 _cache: dict = {}
 CACHE_TTL = 60
+_kite_client: Optional["KiteConnect"] = None  # module-level singleton
 
 MOCK_HOLDINGS = [
     {
@@ -120,16 +123,69 @@ MOCK_HOLDINGS = [
 ]
 
 
-def _kite_instance():
+def _tag(holding: dict) -> str:
+    cat = holding.get("fund_category", "")
+    asset = holding.get("asset_type", "equity")
+    if cat == "ELSS":
+        return "ELSS"
+    if cat == "SGB":
+        return "SGB"
+    if asset == "pension" or cat == "NPS":
+        return "Pension"
+    if asset == "debt" or cat in ("PPF", "Debt"):
+        return "Debt"
+    return "Equity"
+
+
+def _enrich(holdings: List[Dict]) -> List[Dict]:
+    enriched = []
+    for raw in holdings:
+        h = dict(raw)
+        qty = float(h.get("quantity", 0))
+        avg = float(h.get("average_price", 0))
+        last = float(h.get("last_price", 0))
+        invested = h.get("invested_amount", avg * qty)
+        current = h.get("current_value", last * qty)
+        h["invested_amount"] = round(float(invested), 2)
+        h["current_value"] = round(float(current), 2)
+        h["return_pct"] = round((float(current) - float(invested)) / float(invested) * 100, 2) if float(invested) else 0
+        h["tag"] = _tag(h)
+        enriched.append(h)
+    return enriched
+
+
+def _ensure_kite() -> Optional["KiteConnect"]:
+    """Return the singleton KiteConnect instance, initialising it if needed."""
+    global _kite_client
     if not _kite_available:
         return None
-    api_key = os.getenv("KITE_API_KEY")
-    access_token = os.getenv("KITE_ACCESS_TOKEN")
-    if not api_key or not access_token:
+    api_key = os.getenv("KITE_API_KEY", "").strip()
+    if not api_key:
         return None
-    kite = KiteConnect(api_key=api_key)
-    kite.set_access_token(access_token)
-    return kite
+    if _kite_client is None:
+        _kite_client = KiteConnect(api_key=api_key)
+        token = os.getenv("KITE_ACCESS_TOKEN", "").strip()
+        if token:
+            _kite_client.set_access_token(token)
+    return _kite_client
+
+
+def set_kite_access_token(token: str) -> None:
+    """Persist a freshly-exchanged access token and invalidate the data cache."""
+    global _kite_client
+    kite = _ensure_kite()
+    if kite:
+        kite.set_access_token(token)
+        _cache.clear()
+
+
+def get_kite_access_token(request_token: str) -> dict:
+    """Exchange a Kite request_token for an access_token dict."""
+    kite = _ensure_kite()
+    if not kite:
+        raise ValueError("KITE_API_KEY not configured")
+    api_secret = os.getenv("KITE_API_SECRET", "").strip()
+    return kite.generate_session(request_token, api_secret=api_secret)
 
 
 def get_holdings(user_id: str) -> List[Dict]:
@@ -137,48 +193,152 @@ def get_holdings(user_id: str) -> List[Dict]:
     if user_id in _cache and now - _cache[user_id]["ts"] < CACHE_TTL:
         return _cache[user_id]["data"]
 
-    kite = _kite_instance()
+    kite = _ensure_kite()
     if kite:
         try:
-            data = kite.holdings()
-            _cache[user_id] = {"data": data, "ts": now}
+            raw = kite.holdings()
+            data = _enrich(raw)
+            _cache[user_id] = {"data": data, "ts": now, "live": True}
             return data
         except Exception:
             pass
 
-    _cache[user_id] = {"data": MOCK_HOLDINGS, "ts": now}
-    return MOCK_HOLDINGS
+    data = _enrich(MOCK_HOLDINGS)
+    _cache[user_id] = {"data": data, "ts": now, "live": False}
+    return data
 
 
-def compute_summary(holdings: List[Dict]) -> Dict[str, Any]:
+def get_summary(user_id: str) -> Dict[str, Any]:
+    holdings = get_holdings(user_id)
+    is_live = _cache.get(user_id, {}).get("live", False)
+
     total_value = sum(h["current_value"] for h in holdings)
     total_invested = sum(h["invested_amount"] for h in holdings)
 
-    by_asset: Dict[str, float] = {"equity": 0, "debt": 0, "gold": 0, "pension": 0}
+    by_asset: Dict[str, float] = {"equity": 0.0, "debt": 0.0, "gold": 0.0, "pension": 0.0}
     elss_invested = 0.0
     ppf_invested = 0.0
     ltcg_this_fy = 0.0
+    stcg_exposure = 0.0
 
     for h in holdings:
-        asset = h.get("asset_type", "equity")
-        by_asset[asset] = by_asset.get(asset, 0) + h["current_value"]
+        tag = h.get("tag", "Equity")
+        cv = h["current_value"]
 
-        if h.get("fund_category") == "ELSS":
+        if tag in ("Equity", "ELSS"):
+            by_asset["equity"] += cv
+        elif tag == "SGB":
+            by_asset["gold"] += cv
+        elif tag in ("Debt", "PPF"):
+            by_asset["debt"] += cv
+        elif tag == "Pension":
+            by_asset["pension"] += cv
+
+        if tag == "ELSS":
             elss_invested += h["invested_amount"]
-        if h.get("fund_category") == "PPF":
+        if tag in ("Debt", "PPF"):
             ppf_invested += h["invested_amount"]
 
-        # Count LTCG only for equity held > 12 months (mocked via purchase_date field)
-        if asset == "equity" and h.get("pnl", 0) > 0:
-            ltcg_this_fy += h["pnl"] * 0.6  # assume 60% of gains are long-term for mock
+        pnl = float(h.get("pnl", 0))
+        if tag in ("Equity", "ELSS") and pnl > 0:
+            ltcg_this_fy += pnl * 0.6
+            stcg_exposure += pnl * 0.4
 
-    xirr_mock = round((total_value - total_invested) / total_invested * 100, 2) if total_invested else 0
+    xirr_proxy = round((total_value - total_invested) / total_invested * 100, 2) if total_invested else 0
+    remaining_80c = max(0.0, 150000 - elss_invested - ppf_invested)
 
     return {
         "total_value": round(total_value, 2),
         "total_invested": round(total_invested, 2),
         "total_pnl": round(total_value - total_invested, 2),
-        "xirr_pct": xirr_mock,
+        "xirr_pct": xirr_proxy,
+        "equity_pct": round(by_asset["equity"] / total_value, 4) if total_value else 0,
+        "debt_pct": round(by_asset["debt"] / total_value, 4) if total_value else 0,
+        "gold_pct": round(by_asset["gold"] / total_value, 4) if total_value else 0,
+        "pension_pct": round(by_asset["pension"] / total_value, 4) if total_value else 0,
+        "allocation": {
+            "equity": round(by_asset["equity"], 2),
+            "debt": round(by_asset["debt"], 2),
+            "gold": round(by_asset["gold"], 2),
+            "pension": round(by_asset["pension"], 2),
+        },
+        "elss_invested": round(elss_invested, 2),
+        "ppf_invested": round(ppf_invested, 2),
+        "remaining_80c": round(remaining_80c, 2),
+        "ltcg_this_fy": round(ltcg_this_fy, 2),
+        "stcg_exposure": round(stcg_exposure, 2),
+        "is_live": is_live,
+    }
+
+
+def get_alerts(summary: Dict) -> List[Dict]:
+    alerts = []
+    fy_end = "March 31"
+
+    remaining_80c = summary.get("remaining_80c", 0)
+    if remaining_80c > 0:
+        alerts.append({
+            "type": "warning",
+            "text": (
+                f"₹{remaining_80c:,.0f} of 80C limit unused. "
+                f"Invest in ELSS before {fy_end} to save up to ₹{int(remaining_80c * 0.30):,} in tax."
+            ),
+        })
+
+    equity_pct = summary.get("equity_pct", 0)
+    if equity_pct > 0.65:
+        overshoot = round((equity_pct - 0.60) * summary["total_value"])
+        alerts.append({
+            "type": "warning",
+            "text": (
+                f"Equity overweight by {round((equity_pct - 0.60) * 100)}pp. "
+                f"Consider moving ₹{overshoot:,} to debt before {fy_end}."
+            ),
+        })
+
+    ltcg = summary.get("ltcg_this_fy", 0)
+    if ltcg > 80000:
+        alerts.append({
+            "type": "info",
+            "text": (
+                f"LTCG at ₹{ltcg:,.0f} — "
+                f"close to ₹1L exempt limit. Avoid harvesting more gains this FY."
+            ),
+        })
+
+    return alerts
+
+
+def get_kite_login_url() -> str:
+    kite = _ensure_kite()
+    if not kite:
+        return ""
+    return kite.login_url()
+
+
+# kept for backward compatibility with any imports
+def compute_summary(holdings: List[Dict]) -> Dict[str, Any]:
+    total_value = sum(h.get("current_value", 0) for h in holdings)
+    total_invested = sum(h.get("invested_amount", 0) for h in holdings)
+    by_asset: Dict[str, float] = {"equity": 0.0, "debt": 0.0, "gold": 0.0, "pension": 0.0}
+    elss_invested = 0.0
+    ppf_invested = 0.0
+    ltcg_this_fy = 0.0
+    for h in holdings:
+        asset = h.get("asset_type", "equity")
+        by_asset[asset] = by_asset.get(asset, 0.0) + h.get("current_value", 0)
+        if h.get("fund_category") == "ELSS":
+            elss_invested += h.get("invested_amount", 0)
+        if h.get("fund_category") == "PPF":
+            ppf_invested += h.get("invested_amount", 0)
+        if asset == "equity" and h.get("pnl", 0) > 0:
+            ltcg_this_fy += h["pnl"] * 0.6
+    xirr = round((total_value - total_invested) / total_invested * 100, 2) if total_invested else 0
+    return {
+        "total_value": round(total_value, 2),
+        "total_invested": round(total_invested, 2),
+        "total_pnl": round(total_value - total_invested, 2),
+        "xirr_pct": xirr,
         "equity_pct": round(by_asset["equity"] / total_value, 4) if total_value else 0,
         "debt_pct": round(by_asset["debt"] / total_value, 4) if total_value else 0,
         "gold_pct": round(by_asset["gold"] / total_value, 4) if total_value else 0,
@@ -186,41 +346,9 @@ def compute_summary(holdings: List[Dict]) -> Dict[str, Any]:
         "elss_invested": round(elss_invested, 2),
         "ppf_invested": round(ppf_invested, 2),
         "ltcg_this_fy": round(ltcg_this_fy, 2),
+        "remaining_80c": round(max(0, 150000 - elss_invested - ppf_invested), 2),
     }
 
 
 def generate_alerts(holdings_summary: Dict) -> List[Dict]:
-    alerts = []
-    fy_end = "March 31"
-
-    remaining_80c = 150000 - holdings_summary["elss_invested"] - holdings_summary["ppf_invested"]
-    if remaining_80c > 0:
-        alerts.append({
-            "type": "warning",
-            "message": (
-                f"₹{remaining_80c:,.0f} of 80C limit unused. "
-                f"Invest in ELSS before {fy_end} to save tax."
-            ),
-        })
-
-    equity_pct = holdings_summary["equity_pct"]
-    if equity_pct > 0.65:
-        overshoot = round((equity_pct - 0.60) * holdings_summary["total_value"])
-        alerts.append({
-            "type": "warning",
-            "message": (
-                f"Equity overweight by {round((equity_pct - 0.60) * 100)}%. "
-                f"Consider moving ₹{overshoot:,} to debt before {fy_end}."
-            ),
-        })
-
-    if holdings_summary["ltcg_this_fy"] > 80000:
-        alerts.append({
-            "type": "info",
-            "message": (
-                f"LTCG at ₹{holdings_summary['ltcg_this_fy']:,.0f} — "
-                f"close to ₹1L exempt limit. Avoid harvesting more gains."
-            ),
-        })
-
-    return alerts
+    return get_alerts(holdings_summary)

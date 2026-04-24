@@ -1,25 +1,28 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { connectWallet, getTotalSupply, getInvoiceData, getExpectedReturnBps, fundInvoice, simulateBuyerPayment, STATUS_LABELS } from '../utils/contract'
 import { ethers } from 'ethers'
+import { fetchSummary } from '../utils/api'
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001'
 
 const s = {
-  page:   { minHeight: '100vh', padding: '80px 24px 60px', maxWidth: 960, margin: '0 auto' },
-  nav:    { position: 'fixed', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', zIndex: 50, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', background: 'linear-gradient(to bottom,rgba(5,8,15,.8),rgba(5,8,15,.3))', borderBottom: '1px solid var(--line)' },
-  brand:  { display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textDecoration: 'none', color: 'var(--ink-0)', fontSize: 20, fontWeight: 700 },
-  mark:   { width: 22, height: 22, borderRadius: '50%', background: 'radial-gradient(circle at 30% 30%,#a8c0ff,#3b5fd4 55%,#0a1020 100%)', boxShadow: '0 0 14px rgba(91,140,255,.55)', flexShrink: 0 },
+  page: { minHeight: '100vh', padding: '80px 24px 60px', maxWidth: 960, margin: '0 auto' },
+  nav: { position: 'fixed', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 32px', zIndex: 50, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', background: 'linear-gradient(to bottom,rgba(5,8,15,.8),rgba(5,8,15,.3))', borderBottom: '1px solid var(--line)' },
+  brand: { display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', textDecoration: 'none', color: 'var(--ink-0)', fontSize: 20, fontWeight: 700 },
+  mark: { width: 22, height: 22, borderRadius: '50%', background: 'radial-gradient(circle at 30% 30%,#a8c0ff,#3b5fd4 55%,#0a1020 100%)', boxShadow: '0 0 14px rgba(91,140,255,.55)', flexShrink: 0 },
   kicker: { fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-2)', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 },
-  dot:    { width: 6, height: 6, borderRadius: '50%', background: '#6ee7a7', boxShadow: '0 0 8px #6ee7a7' },
-  h1:     { fontSize: 'clamp(28px,4.5vw,52px)', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: 12, color: 'var(--ink-0)' },
-  lead:   { color: 'var(--ink-2)', fontSize: 15, lineHeight: 1.6, maxWidth: '54ch', marginBottom: 40 },
-  grid:   { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 },
-  card:   { padding: '22px 24px', border: '1px solid var(--line)', borderRadius: 16, background: 'rgba(14,23,48,.55)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', gap: 14 },
-  btn:    { padding: '11px 22px', borderRadius: 999, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 7 },
+  dot: { width: 6, height: 6, borderRadius: '50%', background: '#6ee7a7', boxShadow: '0 0 8px #6ee7a7' },
+  h1: { fontSize: 'clamp(28px,4.5vw,52px)', fontWeight: 800, letterSpacing: '-0.025em', marginBottom: 12, color: 'var(--ink-0)' },
+  lead: { color: 'var(--ink-2)', fontSize: 15, lineHeight: 1.6, maxWidth: '54ch', marginBottom: 40 },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 },
+  card: { padding: '22px 24px', border: '1px solid var(--line)', borderRadius: 16, background: 'rgba(14,23,48,.55)', backdropFilter: 'blur(8px)', display: 'flex', flexDirection: 'column', gap: 14 },
+  btn: { padding: '11px 22px', borderRadius: 999, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 7 },
   btnSec: { padding: '11px 22px', borderRadius: 999, border: '1px solid var(--line-2)', background: 'rgba(255,255,255,.03)', color: 'var(--ink-1)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 7 },
-  pill:   (color) => ({ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: `${color}18`, color, border: `1px solid ${color}40` }),
+  pill: (color) => ({ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 12px', borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', background: `${color}18`, color, border: `1px solid ${color}40` }),
   walletPill: { display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 999, border: '1px solid var(--line-2)', background: 'rgba(91,140,255,.06)', fontSize: 12, color: 'var(--ink-1)' },
-  err:    { padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(248,113,113,.3)', background: 'rgba(248,113,113,.06)', color: '#f87171', fontSize: 13, marginTop: 12 },
-  success:{ padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(110,231,167,.3)', background: 'rgba(110,231,167,.06)', color: '#6ee7a7', fontSize: 13, marginTop: 12 },
+  err: { padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(248,113,113,.3)', background: 'rgba(248,113,113,.06)', color: '#f87171', fontSize: 13, marginTop: 12 },
+  success: { padding: '14px 18px', borderRadius: 12, border: '1px solid rgba(110,231,167,.3)', background: 'rgba(110,231,167,.06)', color: '#6ee7a7', fontSize: 13, marginTop: 12 },
 }
 
 const STATUS_COLORS = { LISTED: '#7aa2ff', FUNDED: '#fbbf24', SETTLED: '#6ee7a7', DEFAULTED: '#f87171' }
@@ -33,17 +36,76 @@ const DEMO_INVOICES = [
 ]
 
 function fmt(n) { return Number(n).toLocaleString('en-IN') }
-function short(addr) { return addr ? addr.slice(0,6) + '…' + addr.slice(-4) : '' }
+function short(addr) { return addr ? addr.slice(0, 6) + '…' + addr.slice(-4) : '' }
 function daysUntil(ts) { return Math.max(0, Math.round((Number(ts) * 1000 - Date.now()) / 86400000)) }
 
 export default function InvestorMarketplace() {
   const navigate = useNavigate()
-  const [wallet,    setWallet]    = useState(null)
-  const [connecting,setConnecting]= useState(false)
-  const [invoices,  setInvoices]  = useState(DEMO_INVOICES)
-  const [loading,   setLoading]   = useState(false)
+  const [wallet, setWallet] = useState(null)
+  const [connecting, setConnecting] = useState(false)
+  const [invoices, setInvoices] = useState(DEMO_INVOICES)
+  const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
-  const [txState,   setTxState]   = useState({})   // tokenId → { busy, error, success }
+  const [txState, setTxState] = useState({})   // tokenId → { busy, error, success }
+  const [kiteModal, setKiteModal] = useState(false)
+  const [kiteChecking, setKiteChecking] = useState(false)
+  const modalRef = useRef(null)
+
+  // Handle Kite OAuth callback: /invest?request_token=XXX&status=success
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const requestToken = params.get('request_token')
+    const status = params.get('status')
+    if (!requestToken || status !== 'success') return
+
+    fetch(`${API_BASE}/kite/callback?request_token=${requestToken}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          localStorage.setItem('kiteConnected', 'true')
+          window.history.replaceState({}, '', '/invest')
+          navigate('/portfolio')
+        }
+      })
+      .catch(() => {
+        window.history.replaceState({}, '', '/invest')
+      })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // close modal on outside click
+  useEffect(() => {
+    if (!kiteModal) return
+    function onDown(e) { if (modalRef.current && !modalRef.current.contains(e.target)) setKiteModal(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [kiteModal])
+
+  async function handleViewPortfolio() {
+    setKiteChecking(true)
+    try {
+      const data = await fetchSummary('demo_user')
+      if (data?.summary?.is_live) {
+        navigate('/portfolio')
+      } else {
+        setKiteModal(true)
+      }
+    } catch {
+      setKiteModal(true)
+    } finally {
+      setKiteChecking(false)
+    }
+  }
+
+  async function handleConnectKite() {
+    try {
+      const res = await fetch(`${API_BASE}/kite/login-url`)
+      if (!res.ok) throw new Error('no url')
+      const { url } = await res.json()
+      window.location.href = url
+    } catch {
+      alert('Could not reach backend to get Kite login URL. Make sure the server is running.')
+    }
+  }
 
   const handleConnect = useCallback(async () => {
     setConnecting(true)
@@ -67,7 +129,7 @@ export default function InvestorMarketplace() {
       for (let i = 0; i < total; i++) {
         const { inv, entry } = await getInvoiceData(provider, i)
         let returnBps = 0
-        try { returnBps = await getExpectedReturnBps(provider, i) } catch {}
+        try { returnBps = await getExpectedReturnBps(provider, i) } catch { }
         items.push({
           tokenId: i,
           buyer: BUYER_NAMES[inv.riskScore >= 80 ? 3 : inv.riskScore >= 65 ? 2 : 1] || 'Corporate Buyer',
@@ -122,9 +184,9 @@ export default function InvestorMarketplace() {
     }
   }
 
-  const listed  = invoices.filter(i => i.status === 'LISTED')
-  const funded  = invoices.filter(i => i.status === 'FUNDED')
-  const settled = invoices.filter(i => ['SETTLED','DEFAULTED'].includes(i.status))
+  const listed = invoices.filter(i => i.status === 'LISTED')
+  const funded = invoices.filter(i => i.status === 'FUNDED')
+  const settled = invoices.filter(i => ['SETTLED', 'DEFAULTED'].includes(i.status))
 
   return (
     <>
@@ -133,16 +195,62 @@ export default function InvestorMarketplace() {
           <span style={s.mark} />
           Nuvest
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {wallet
             ? <div style={s.walletPill}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#6ee7a7', boxShadow: '0 0 6px #6ee7a7' }} />
-                {short(wallet.address)}
-              </div>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#6ee7a7', boxShadow: '0 0 6px #6ee7a7' }} />
+              {short(wallet.address)}
+            </div>
             : <button style={{ ...s.btnSec, fontSize: 12 }} onClick={handleConnect} disabled={connecting}>
-                {connecting ? 'Connecting…' : 'Connect MetaMask'}
-              </button>
+              {connecting ? 'Connecting…' : 'Connect MetaMask'}
+            </button>
           }
+          <div style={{ position: 'relative' }}>
+            <button
+              style={{ ...s.btnSec, fontSize: 12 }}
+              onClick={handleViewPortfolio}
+              disabled={kiteChecking}
+            >
+              {kiteChecking
+                ? <><SpinIcon />Checking…</>
+                : <><ChartIcon />View Portfolio</>}
+            </button>
+
+            {kiteModal && (
+              <div
+                ref={modalRef}
+                style={{
+                  position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                  width: 280, zIndex: 100,
+                  background: 'rgba(8,14,30,0.98)',
+                  border: '1px solid var(--line)',
+                  borderRadius: 14,
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                  padding: '20px',
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-0)', marginBottom: 8, lineHeight: 1.4 }}>
+                  Connect your Zerodha account to view live portfolio
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.6, marginBottom: 18 }}>
+                  Nuvest fetches your live holdings via Kite Connect to show tax insights and AI rebalancing advice.
+                </div>
+                <button
+                  onClick={handleConnectKite}
+                  style={{ width: '100%', padding: '10px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10 }}
+                >
+                  Connect Kite →
+                </button>
+                <button
+                  onClick={() => { setKiteModal(false); navigate('/portfolio') }}
+                  style={{ width: '100%', padding: '8px', borderRadius: 8, border: 'none', background: 'transparent', color: 'var(--ink-3)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Skip for now (view mock data)
+                </button>
+              </div>
+            )}
+          </div>
+
           <button style={s.btnSec} onClick={() => navigate('/')}>← Home</button>
         </div>
       </nav>
@@ -267,8 +375,8 @@ export default function InvestorMarketplace() {
 
 function InvoiceCard({ inv, tx, onFund, onSettle }) {
   const statusColor = STATUS_COLORS[inv.status] || 'var(--ink-2)'
-  const isListed  = inv.status === 'LISTED'
-  const isFunded  = inv.status === 'FUNDED'
+  const isListed = inv.status === 'LISTED'
+  const isFunded = inv.status === 'FUNDED'
   const isSettled = inv.status === 'SETTLED'
   const verdictColor = inv.score >= 70 ? '#6ee7a7' : inv.score >= 50 ? '#fbbf24' : '#f87171'
 
@@ -327,7 +435,7 @@ function InvoiceCard({ inv, tx, onFund, onSettle }) {
       )}
 
       {tx?.success && <div style={{ fontSize: 13, color: '#6ee7a7', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(110,231,167,.25)', background: 'rgba(110,231,167,.06)' }}>{tx.success}</div>}
-      {tx?.error   && <div style={{ fontSize: 12, color: '#f87171', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(248,113,113,.25)', background: 'rgba(248,113,113,.06)', wordBreak: 'break-word' }}>{tx.error}</div>}
+      {tx?.error && <div style={{ fontSize: 12, color: '#f87171', padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(248,113,113,.25)', background: 'rgba(248,113,113,.06)', wordBreak: 'break-word' }}>{tx.error}</div>}
     </div>
   )
 }
@@ -348,6 +456,14 @@ function SpinIcon() {
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+    </svg>
+  )
+}
+
+function ChartIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   )
 }

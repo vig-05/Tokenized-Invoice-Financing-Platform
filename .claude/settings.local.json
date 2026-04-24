@@ -13,7 +13,32 @@
       "PowerShell(Stop-Process -Name node -Force -ErrorAction SilentlyContinue)",
       "PowerShell(Stop-Process -Name python -Force -ErrorAction SilentlyContinue)",
       "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer_name\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60}\")",
-      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"sme_name\\\\\":\\\\\"SME\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60,\\\\\"sme_history_count\\\\\":3,\\\\\"sme_default_rate\\\\\":0}\")"
+      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"sme_name\\\\\":\\\\\"SME\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60,\\\\\"sme_history_count\\\\\":3,\\\\\"sme_default_rate\\\\\":0}\")",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(python -m uvicorn --version)",
+      "Bash(pkill -f \"uvicorn app:app\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); s=d['summary']; print\\('total_value:', s['total_value'], '| is_live:', s['is_live'], '| alerts:', len\\(d['alerts']\\)\\)\")",
+      "Bash(curl -s \"http://localhost:8000/portfolio/summary?user_id=demo_user\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); s=d['summary']; print\\('total_value:', s['total_value'], '| is_live:', s['is_live'], '| alerts:', len\\(d['alerts']\\)\\)\")",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(python -m uvicorn app:app --port 8000)",
+      "Bash(netstat -ano)",
+      "PowerShell(Get-Process | Where-Object {$_.Name -eq \"python\"} | Select-Object Id, Name, CPU)",
+      "Bash(python -m uvicorn app:app --port 8001)",
+      "Bash(curl -s \"http://localhost:8001/portfolio/summary?user_id=demo_user\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); s=d['summary']; print\\('OK — total_value:', s['total_value'], '| is_live:', s['is_live'], '| remaining_80c:', s['remaining_80c'], '| alerts:', len\\(d['alerts']\\), '| holdings:', len\\(d['holdings']\\)\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('is_live:', d['summary']['is_live']\\)\")",
+      "Bash(curl -s -X POST http://localhost:8001/portfolio/chat -H 'Content-Type: application/json' -d '{\"message\":\"How much ELSS can I invest for 80C?\",\"user_id\":\"demo_user\",\"history\":[]}')",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('response:', d['response'][:120]\\)\")",
+      "Bash(curl -s -X POST http://localhost:8001/invoice/settlement -H 'Content-Type: application/json' -d '{\"invoice_id\":1,\"investor_address\":\"0xabc123\",\"payout_wei\":9200000000000000000,\"invoice_amount_inr\":1000000}')",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('notification:', d['notification']\\); print\\('payout_inr:', d['payout_inr']\\)\")",
+      "Bash(curl -s \"http://localhost:8001/kite/login-url\")",
+      "Bash(curl -s \"http://localhost:8000/kite/login-url\")",
+      "Bash(sed -i 's|VITE_API_BASE=http://localhost:8000|VITE_API_BASE=http://localhost:8002|' /c/Users/Nitya/Tokenized-Invoice-Financing-Platform/.env)",
+      "Bash(curl -s \"http://localhost:8002/portfolio/summary?user_id=demo_user\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"require\\('./node_modules/recharts/package.json'\\)\")"
     ]
   }
 }
