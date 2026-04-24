@@ -85,6 +85,9 @@ export default function SMEDashboard() {
       const advanceRateBps = riskScore >= 70 ? 9200 : 8200
 
       const result = await listInvoice(wallet.signer, { invoiceAmountEth: amountEth, dueDateUnix: dueDate, invoiceHash: hash, riskScore, advanceRateBps })
+      if (result.tokenId != null) {
+        localStorage.setItem(`invoice_buyer_${result.tokenId}`, form.buyer)
+      }
       setListResult(result)
     } catch (e) {
       setListError(e.message || 'Transaction failed')

@@ -59,7 +59,8 @@ module.exports = {
       url:      AMOY_RPC_URL,
       accounts: [DEPLOYER_PRIVATE_KEY],
       chainId:  80002,
-      gasPrice: 30000000000, // 30 gwei — safe default for Amoy
+      maxFeePerGas:         35000000000,  // 35 gwei
+      maxPriorityFeePerGas: 25000000000,  // 25 gwei — Amoy minimum tip cap
     },
 
     // Polygon mainnet (production — not used in hackathon)

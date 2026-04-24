@@ -23,7 +23,6 @@ const s = {
 }
 
 const STATUS_COLORS = { LISTED: '#7aa2ff', FUNDED: '#fbbf24', SETTLED: '#6ee7a7', DEFAULTED: '#f87171' }
-const BUYER_NAMES = { 3: 'Reliance Retail Ltd', 2: 'Tata Consumer Products', 1: 'HCL Technologies', 0: 'Unknown Buyer' }
 
 // Sample invoices for demo when chain has no data or no MetaMask
 const DEMO_INVOICES = [
@@ -70,7 +69,7 @@ export default function InvestorMarketplace() {
         try { returnBps = await getExpectedReturnBps(provider, i) } catch {}
         items.push({
           tokenId: i,
-          buyer: BUYER_NAMES[inv.riskScore >= 80 ? 3 : inv.riskScore >= 65 ? 2 : 1] || 'Corporate Buyer',
+          buyer: localStorage.getItem(`invoice_buyer_${i}`) || 'Corporate Buyer',
           score: Number(inv.riskScore),
           verdict: inv.riskScore >= 70 ? 'LOW_RISK' : 'MEDIUM_RISK',
           invoiceAmountWei: inv.invoiceAmount,

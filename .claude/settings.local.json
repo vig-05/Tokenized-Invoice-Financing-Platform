@@ -13,7 +13,8 @@
       "PowerShell(Stop-Process -Name node -Force -ErrorAction SilentlyContinue)",
       "PowerShell(Stop-Process -Name python -Force -ErrorAction SilentlyContinue)",
       "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer_name\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60}\")",
-      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"sme_name\\\\\":\\\\\"SME\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60,\\\\\"sme_history_count\\\\\":3,\\\\\"sme_default_rate\\\\\":0}\")"
+      "Bash(curl -s -X POST http://localhost:8000/invoice/score -H \"Content-Type: application/json\" -d \"{\\\\\"buyer\\\\\":\\\\\"Reliance Retail Ltd\\\\\",\\\\\"sme_name\\\\\":\\\\\"SME\\\\\",\\\\\"invoice_amount\\\\\":1000000,\\\\\"due_days\\\\\":60,\\\\\"sme_history_count\\\\\":3,\\\\\"sme_default_rate\\\\\":0}\")",
+      "Bash(pip show *)"
     ]
   }
 }

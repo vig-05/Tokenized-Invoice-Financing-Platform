@@ -2,34 +2,18 @@ import { ethers } from 'ethers'
 import InvoiceTokenABI  from './abis/InvoiceToken.json'
 import InvoiceEscrowABI from './abis/InvoiceEscrow.json'
 
-export const TOKEN_ADDRESS  = '0x9039ada3C6e1FcEb8c05Af9Ea7e45771580042DF'
-export const ESCROW_ADDRESS = '0x2DBbc84b6455bc1F8F0e9aF715503330DECeCC6c'
-export const AMOY_CHAIN_ID  = 80002
+export const TOKEN_ADDRESS  = import.meta.env.VITE_TOKEN_CONTRACT_ADDRESS  || '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+export const ESCROW_ADDRESS = import.meta.env.VITE_ESCROW_CONTRACT_ADDRESS || '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
 
 export async function connectWallet() {
   if (!window.ethereum) throw new Error('MetaMask is not installed')
   await window.ethereum.request({ method: 'eth_requestAccounts' })
   const provider = new ethers.BrowserProvider(window.ethereum)
-  const network  = await provider.getNetwork()
-  if (Number(network.chainId) !== AMOY_CHAIN_ID) {
-    await window.ethereum.request({
-      method: 'wallet_switchEthereumChain',
-      params: [{ chainId: '0x' + AMOY_CHAIN_ID.toString(16) }],
-    }).catch(() => {
-      throw new Error('Please switch MetaMask to Polygon Amoy testnet (chainId 80002)')
-    })
-  }
-  const signer  = await provider.getSigner()
-  const address = await signer.getAddress()
+  const signer   = await provider.getSigner()
+  const address  = await signer.getAddress()
   return { provider, signer, address }
 }
 
-// Amoy requires a minimum priority fee of 25 gwei. Use 30 gwei tip + 60 gwei max
-// to stay safely above the floor while keeping costs low on testnet.
-const AMOY_GAS = {
-  maxPriorityFeePerGas: ethers.parseUnits('30', 'gwei'),
-  maxFeePerGas:         ethers.parseUnits('60', 'gwei'),
-}
 
 export function getContracts(signerOrProvider) {
   return {
@@ -40,14 +24,14 @@ export function getContracts(signerOrProvider) {
 
 export async function listInvoice(signer, { invoiceAmountEth, dueDateUnix, invoiceHash, riskScore, advanceRateBps }) {
   const { escrow } = getContracts(signer)
+  const invoiceAmountWei = ethers.parseEther(String(invoiceAmountEth))
   const tx = await escrow.listInvoice(
-    ethers.parseEther(String(invoiceAmountEth)),
+    invoiceAmountWei,
     dueDateUnix,
     invoiceHash,
     riskScore,
     advanceRateBps,
     ESCROW_ADDRESS,
-    AMOY_GAS,
   )
   const receipt = await tx.wait()
   const iface  = new ethers.Interface(InvoiceEscrowABI)
@@ -63,13 +47,13 @@ export async function listInvoice(signer, { invoiceAmountEth, dueDateUnix, invoi
 
 export async function fundInvoice(signer, tokenId, advanceAmountWei) {
   const { escrow } = getContracts(signer)
-  const tx = await escrow.fundInvoice(BigInt(tokenId), { value: BigInt(advanceAmountWei), ...AMOY_GAS })
+  const tx = await escrow.fundInvoice(BigInt(tokenId), { value: BigInt(advanceAmountWei) })
   return tx.wait()
 }
 
 export async function simulateBuyerPayment(signer, tokenId, invoiceAmountWei) {
   const { escrow } = getContracts(signer)
-  const tx = await escrow.simulateBuyerPayment(BigInt(tokenId), { value: BigInt(invoiceAmountWei), ...AMOY_GAS })
+  const tx = await escrow.simulateBuyerPayment(BigInt(tokenId), { value: BigInt(invoiceAmountWei) })
   return tx.wait()
 }
 
