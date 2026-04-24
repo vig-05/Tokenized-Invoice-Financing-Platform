@@ -1,0 +1,1901 @@
+<!DOCTYPE html><html data-src-ver="4c8fca97" lang="en"><head>
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuvest — AI Investing &amp; SME Liquidity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
+<style id="aeonik-overrides">
+  html, body, .brand, .btn, .wc-btn, .nav-cta, #tweaks-panel, #tweaks-panel .seg button {
+    font-family: 'Manrope', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+  }
+  h1, h2, h3, h4, h5, h6,
+  .hero h1, .hero-h1,
+  .section-title, .section-title em, .section-title .sw,
+  .product-card h3, .product-card h3 em,
+  .impact-card h4,
+  .flow-step .name,
+  .stat-num,
+  .onboard h2, .onboard h2 em,
+  .choice h3, .choice h3 em,
+  .wc-title, .wc-num,
+  .wc-asset-icon,
+  .stats-mini .m .v,
+  #tweaks-panel .title {
+    font-family: 'Manrope', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    font-weight: 700 !important;
+    font-style: normal !important;
+    letter-spacing: -0.025em;
+  }
+  h1, .hero h1, .hero-h1, .section-title {
+    font-weight: 800 !important;
+  }
+  .eyebrow, .section-kicker, .stat-label, .scroll-cue, .nav-cta,
+  .flow-label, .flow-step .desc, .flow-step .idx,
+  .feat .k, .tag, .choice .next,
+  .wc-net, .wc-addr, .wc-link, .wc-label, .wc-unit,
+  .stats-mini .m .l, footer,
+  #tweaks-panel .section-label {
+    font-family: 'Manrope', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+    font-weight: 500;
+  }
+</style>
+<style>
+  :root {
+    /* Midnight blue palette */
+    --bg-0: #05080f;
+    --bg-1: #070b17;
+    --bg-2: #0a1020;
+    --bg-3: #0e1730;
+    --ink-0: #e9edf7;
+    --ink-1: #c2cadf;
+    --ink-2: #8894b3;
+    --ink-3: #4e5a7a;
+    --line: rgba(140, 160, 210, 0.12);
+    --line-2: rgba(140, 160, 210, 0.22);
+    --accent: #5b8cff;        /* midnight glow */
+    --accent-2: #7aa2ff;
+    --accent-deep: #1a3a8a;
+    --halo: #3b5fd4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: var(--bg-0);
+    color: var(--ink-0);
+    font-family: 'Geist', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(59,95,212,0.22), transparent 60%),
+      radial-gradient(900px 500px at 80% 40%, rgba(26,58,138,0.18), transparent 60%),
+      radial-gradient(900px 500px at 20% 80%, rgba(59,95,212,0.10), transparent 60%),
+      var(--bg-0);
+    min-height: 100vh;
+  }
+  ::selection { background: rgba(91,140,255,0.35); color: #fff; }
+
+  /* Grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.4'/></svg>");
+    opacity: 0.05;
+    z-index: 100;
+    mix-blend-mode: overlay;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 32px;
+    z-index: 50;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: linear-gradient(to bottom, rgba(5,8,15,0.75), rgba(5,8,15,0.25));
+    border-bottom: 1px solid transparent;
+    transition: border-color .4s ease, background .4s ease;
+  }
+  .nav.scrolled { border-bottom-color: var(--line); }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: 'Instrument Serif', serif; font-size: 22px; letter-spacing: 0.01em; }
+  .brand .mark {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #a8c0ff, #3b5fd4 55%, #0a1020 100%);
+    box-shadow: 0 0 14px rgba(91,140,255,0.55), inset 0 0 6px rgba(255,255,255,0.25);
+  }
+  .nav-links { display: flex; gap: 28px; font-size: 13px; color: var(--ink-2); }
+  .nav-links a { color: inherit; text-decoration: none; transition: color .2s; }
+  .nav-links a:hover { color: var(--ink-0); }
+  .nav-cta {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 8px 14px; border: 1px solid var(--line-2); border-radius: 999px;
+    color: var(--ink-0); background: rgba(91,140,255,0.06);
+    cursor: pointer; transition: all .25s ease;
+  }
+  .nav-cta:hover { background: rgba(91,140,255,0.16); border-color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid; place-items: center;
+    position: relative; padding: 120px 32px 60px;
+    text-align: center;
+  }
+  .eyebrow {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.22em;
+    color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 8px 14px;
+    border: 1px solid var(--line-2); border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+    margin-bottom: 34px;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    animation: pulse 2.2s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .4 } }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: clamp(44px, 7.2vw, 104px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    max-width: 18ch;
+    margin: 0 auto 36px;
+  }
+  .hero-h1 .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateX(var(--dx, 0)) translateY(8px);
+    transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1);
+    will-change: transform, opacity;
+  }
+  .hero-h1 .w[data-dir="l"] { --dx: -140px; }
+  .hero-h1 .w[data-dir="r"] { --dx: 140px; }
+  .hero-h1 .w.in { opacity: 1; transform: translateX(0) translateY(0); }
+  .hero h1 em { font-style: italic; color: var(--ink-1); font-weight: 300; }
+  .hero h1 .accent { color: var(--accent-2); font-style: italic; }
+
+  .hero p.lead {
+    font-size: 17px; line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 52ch; margin: 0 auto 44px;
+  }
+
+  .hero-orb-wrap {
+    position: relative;
+    width: min(920px, 110vw);
+    height: min(920px, 110vw);
+    margin: 0 auto 40px;
+    margin-top: -60px;
+    pointer-events: auto;
+    z-index: 0;
+  }
+  #numberSphere {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    cursor: grab;
+    touch-action: none;
+  }
+  #numberSphere:active { cursor: grabbing; }
+  .hero { position: relative; z-index: 1; }
+  .hero .eyebrow, .hero h1, .hero p.lead, .hero .cta-row { position: relative; z-index: 2; }
+  /* Everything after the hero stays above the sphere's fading residue */
+  section:not(.hero), footer { position: relative; z-index: 5; background: transparent; }
+
+  /* ORB */
+  .orb {
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at var(--lx, 35%) var(--ly, 30%), rgba(200,220,255,1), rgba(91,140,255,0.7) 22%, rgba(26,58,138,0.85) 55%, rgba(5,8,15,1) 88%);
+    box-shadow:
+      0 0 120px 20px rgba(59,95,212,0.35),
+      inset -40px -60px 120px rgba(5,8,15,0.7),
+      inset 20px 30px 80px rgba(170,200,255,0.25);
+    animation: orbFloat 8s ease-in-out infinite;
+  }
+  @keyframes orbFloat {
+    0%,100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-12px) scale(1.02); }
+  }
+  .orb::before {
+    content: ""; position: absolute; inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 40%, rgba(91,140,255,0.15) 55%, transparent 70%);
+    mix-blend-mode: screen;
+  }
+  /* Wireframe mesh over orb */
+  .orb-mesh {
+    position: absolute; inset: 0; border-radius: 50%;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 14px, rgba(170,200,255,0.08) 14px 15px),
+      repeating-linear-gradient(90deg, transparent 0 14px, rgba(170,200,255,0.08) 14px 15px);
+    mix-blend-mode: screen;
+    opacity: 0.6;
+    -webkit-mask: radial-gradient(circle, #000 40%, transparent 72%);
+            mask: radial-gradient(circle, #000 40%, transparent 72%);
+    animation: meshRot 40s linear infinite;
+  }
+  @keyframes meshRot { to { transform: rotate(360deg) } }
+  /* orbiting rings */
+  .orbit {
+    position: absolute; inset: -5%;
+    border: 1px solid rgba(122,162,255,0.14);
+    border-radius: 50%;
+    animation: spin 36s linear infinite;
+  }
+  .orbit.two { inset: -12%; border-color: rgba(122,162,255,0.08); animation-duration: 60s; animation-direction: reverse; }
+  .orbit.three { inset: -20%; border-color: rgba(122,162,255,0.05); animation-duration: 90s; }
+  .orbit::before {
+    content: ""; position: absolute; top: -4px; left: 50%;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 12px var(--accent-2);
+  }
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+  .btn {
+    font-family: 'Geist', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 14px 26px;
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: rgba(255,255,255,0.03);
+    color: var(--ink-0);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px;
+    transition: all .25s ease;
+    letter-spacing: -0.005em;
+  }
+  .btn:hover { background: rgba(255,255,255,0.06); border-color: var(--ink-2); transform: translateY(-1px); }
+  .btn.primary {
+    background: linear-gradient(180deg, #ff6bb3, #d43b8a);
+    border-color: transparent; color: #1a0510;
+    font-weight: 600;
+    box-shadow: 0 8px 32px -8px rgba(212,59,138,0.6), inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+  .btn.primary:hover { box-shadow: 0 12px 40px -8px rgba(212,59,138,0.8), inset 0 1px 0 rgba(255,255,255,0.5); }
+  .btn .arrow { transition: transform .25s ease; }
+  .btn:hover .arrow { transform: translateX(3px); }
+
+  /* Scroll cue */
+  .scroll-cue {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    font-family: 'Geist Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.25em;
+    color: var(--ink-3);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .scroll-cue .line { width: 1px; height: 32px; background: linear-gradient(to bottom, var(--ink-3), transparent); animation: drop 1.8s ease-in-out infinite; }
+  @keyframes drop { 0% { transform: scaleY(0); transform-origin: top } 50% { transform: scaleY(1); transform-origin: top } 51% { transform-origin: bottom } 100% { transform: scaleY(0); transform-origin: bottom } }
+
+  /* SECTIONS */
+  section { position: relative; padding: 140px 32px; }
+  .wrap { max-width: 1240px; margin: 0 auto; }
+  .section-head { margin-bottom: 64px; }
+  .section-kicker {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--ink-2);
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: 24px;
+  }
+  .section-kicker::before { content: ""; width: 18px; height: 1px; background: var(--accent); }
+  .section-title {
+    font-family: 'Instrument Serif', serif;
+    font-weight: 400;
+    font-size: clamp(36px, 5vw, 72px);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    max-width: 18ch;
+  }
+  .section-title em { font-style: italic; color: var(--accent-2); }
+  .section-title .sw {
+    display: inline-block;
+    opacity: 0;
+    transform: translateX(var(--sdx, 0));
+    transition: opacity 1s cubic-bezier(.2,.8,.2,1), transform 1s cubic-bezier(.2,.8,.2,1);
+    will-change: transform, opacity;
+  }
+  .section-title .sw[data-dir="l"] { --sdx: -120px; }
+  .section-title .sw[data-dir="r"] { --sdx: 120px; }
+  .section-title .sw.in { opacity: 1; transform: translateX(0); }
+
+  /* STATS cards */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+  }
+  .stat-card {
+    grid-column: span 3;
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(14,23,48,0.6), rgba(10,16,32,0.3));
+    border-radius: 18px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    min-height: 220px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    --spot-x: 50%;
+    --spot-y: 50%;
+    --spot-hue: 220;
+    transition: border-color .3s ease, transform .3s ease;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: rgba(122,162,255,0.3); }
+  .stat-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(260px circle at var(--spot-x) var(--spot-y),
+      hsl(var(--spot-hue) 85% 65% / 0.22),
+      hsl(var(--spot-hue) 70% 50% / 0.08) 40%,
+      transparent 70%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0;
+    transition: opacity .35s ease;
+  }
+  .stat-card:hover::before { opacity: 1; }
+  .stat-card::after {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(200px circle at var(--spot-x) var(--spot-y),
+      hsl(var(--spot-hue) 100% 75% / 0.75),
+      transparent 65%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .35s ease;
+  }
+  .stat-card:hover::after { opacity: 1; }
+  .stat-card > * { position: relative; z-index: 1; }
+  .stat-card.lg { grid-column: span 6; }
+  .stat-card::after {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(122,162,255,0.4), transparent);
+  }
+  .stat-num {
+    font-family: 'Instrument Serif', serif;
+    font-size: clamp(40px, 5vw, 64px);
+    line-height: 1; letter-spacing: -0.02em;
+    color: var(--ink-0);
+  }
+  .stat-num .unit { font-family: 'Geist', sans-serif; font-size: 0.45em; color: var(--ink-2); margin-left: 6px; vertical-align: 0.5em; }
+  .stat-label {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--ink-2);
+  }
+  .stat-card.accent {
+    background: linear-gradient(140deg, rgba(91,140,255,0.18), rgba(26,58,138,0.25));
+    border-color: rgba(122,162,255,0.3);
+  }
+  .stat-card.accent::before { opacity: 0.9; }
+  .stat-card.accent::after { opacity: 1; }
+  .stat-card.accent .stat-num { color: #e5edff; }
+
+  /* PRODUCT DUAL */
+  .duo {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .product-card {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 40px;
+    background: linear-gradient(180deg, rgba(14,23,48,0.55), rgba(10,16,32,0.2));
+    min-height: 520px;
+    position: relative;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .product-card .badge {
+    font-family: 'Geist Mono', monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--accent-2);
+    padding: 5px 10px;
+    border: 1px solid rgba(122,162,255,0.35);
+    border-radius: 999px;
+    display: inline-flex; width: max-content;
+    background: rgba(91,140,255,0.08);
+  }
+  .product-card h3 {
+    font-family: 'Instrument Serif', serif; font-weight: 400;
+    font-size: 40px; line-height: 1.05; letter-spacing: -0.01em;
+    margin: 22px 0 14px;
+  }
+  .product-card h3 em { font-style: italic; color: var(--accent-2); }
+  .product-card p { color: var(--ink-2); font-size: 15px; line-height: 1.55; max-width: 42ch; }
+  .product-card .feats {
+    margin-top: auto; padding-top: 32px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .feat {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-size: 13px; color: var(--ink-1);
+    padding: 10px 0;
+    border-top: 1px solid var(--line);
+  }
+  .feat .tick {
+    flex-shrink: 0;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(91,140,255,0.15);
+    border: 1px solid rgba(122,162,255,0.4);
+    display: grid; place-items: center;
+    margin-top: 2px;
+  }
+  .feat .tick::after {
+    content: ""; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--accent-2); box-shadow: 0 0 6px var(--accent-2);
+  }
+  .feat .k {
+    font-family: 'Geist Mono', monospace; font-size: 10px;
+    color: var(--ink-3); letter-spacing: 0.15em; text-transform: uppercase;
+    min-width: 38px;
+  }
+
+  /* FLOW */
+  .flow {
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 48px;
+    background: linear-gradient(180deg, rgba(14,23,48,0.45), rgba(10,16,32,0.2));
+  }
+  .flow-row {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; align-items: stretch;
+    margin-bottom: 18px;
+  }
+  .flow-step {
+    position: relative;
+    padding: 22px 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(10,16,32,0.6);
+    min-height: 130px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .flow-step .idx {
+    font-family: 'Geist Mono', monospace; font-size: 10px;
+    color: var(--accent-2); letter-spacing: 0.2em;
+  }
+  .flow-step .name {
+    font-family: 'Instrument Serif', serif; font-size: 18px; line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .flow-step .desc {
+    font-size: 11px; color: var(--ink-3);
+    font-family: 'Geist Mono', monospace;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .flow-arrow {
+    position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+    width: 20px; height: 20px;
+    display: grid; place-items: center;
+    color: var(--accent);
+    z-index: 2;
+  }
+  .flow-label {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    color: var(--ink-2); letter-spacing: 0.2em; text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .flow-label::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+  .example {
+    margin-top: 28px; padding: 20px 24px;
+    border-radius: 12px;
+    border: 1px dashed var(--line-2);
+    background: rgba(91,140,255,0.05);
+    font-size: 13px; color: var(--ink-1); line-height: 1.6;
+  }
+  .example b { color: var(--accent-2); font-weight: 500; }
+
+  /* IMPACT */
+  .impact { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .impact-card {
+    padding: 36px;
+    border: 1px solid var(--line); border-radius: 18px;
+    background: linear-gradient(180deg, rgba(14,23,48,0.5), rgba(10,16,32,0.2));
+    min-height: 320px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .impact-card h4 {
+    font-family: 'Instrument Serif', serif; font-weight: 400;
+    font-size: 28px; letter-spacing: -0.01em;
+  }
+  .impact-card ul { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .impact-card li {
+    font-size: 13px; color: var(--ink-1); line-height: 1.5;
+    padding-left: 16px; position: relative;
+  }
+  .impact-card li::before {
+    content: ""; position: absolute; left: 0; top: 8px;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* GET STARTED CTA SECTION */
+  .cta-section {
+    text-align: center;
+    padding: 160px 32px;
+  }
+  .cta-section .section-title { margin: 0 auto; }
+
+  /* ONBOARDING OVERLAY */
+  .onboard {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(5,8,15,0.85);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 32px;
+    opacity: 0;
+    transition: opacity .4s ease;
+  }
+  .onboard.open { display: flex; opacity: 1; }
+  .onboard-panel {
+    width: 100%; max-width: 980px;
+    background: linear-gradient(180deg, rgba(14,23,48,0.85), rgba(10,16,32,0.9));
+    border: 1px solid var(--line-2);
+    border-radius: 24px;
+    padding: 56px 48px;
+    position: relative;
+    transform: translateY(20px) scale(0.98);
+    transition: transform .5s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 80px rgba(59,95,212,0.15);
+  }
+  .onboard.open .onboard-panel { transform: translateY(0) scale(1); }
+  .onboard-close {
+    position: absolute; top: 20px; right: 20px;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid var(--line-2); background: transparent;
+    color: var(--ink-1); cursor: pointer;
+    display: grid; place-items: center;
+    transition: all .2s ease;
+  }
+  .onboard-close:hover { background: rgba(255,255,255,0.05); border-color: var(--ink-2); }
+
+  .onboard .kicker {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .onboard .kicker::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent);
+  }
+  .onboard h2 {
+    font-family: 'Instrument Serif', serif; font-weight: 400;
+    font-size: clamp(40px, 5vw, 60px);
+    line-height: 1.02; letter-spacing: -0.015em;
+    margin-bottom: 14px;
+    max-width: 18ch;
+  }
+  .onboard h2 em { font-style: italic; color: var(--accent-2); }
+  .onboard .sub {
+    color: var(--ink-2); font-size: 15px; max-width: 56ch;
+    margin-bottom: 44px; line-height: 1.55;
+  }
+
+  .choice-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .choice {
+    position: relative;
+    text-align: left;
+    padding: 32px 28px;
+    border: 1px solid var(--line-2);
+    border-radius: 18px;
+    background: rgba(10,16,32,0.5);
+    color: var(--ink-0);
+    cursor: pointer;
+    transition: all .3s cubic-bezier(.2,.8,.2,1);
+    overflow: hidden;
+    min-height: 280px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    font-family: inherit;
+  }
+  .choice:hover {
+    border-color: rgba(122,162,255,0.5);
+    background: rgba(26,58,138,0.18);
+    transform: translateY(-2px);
+  }
+  .choice::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(600px circle at var(--mx,50%) var(--my,50%), rgba(91,140,255,0.12), transparent 40%);
+    opacity: 0; transition: opacity .3s;
+    pointer-events: none;
+  }
+  .choice:hover::after { opacity: 1; }
+  .choice .icon-wrap {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: linear-gradient(140deg, rgba(91,140,255,0.2), rgba(26,58,138,0.4));
+    border: 1px solid rgba(122,162,255,0.3);
+    display: grid; place-items: center;
+    margin-bottom: 20px;
+  }
+  .choice .icon-wrap svg { color: var(--accent-2); }
+  .choice .tag {
+    font-family: 'Geist Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-2);
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .choice h3 {
+    font-family: 'Instrument Serif', serif; font-weight: 400;
+    font-size: 30px; line-height: 1.05; letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+  .choice h3 em { font-style: italic; color: var(--accent-2); }
+  .choice p {
+    color: var(--ink-2); font-size: 13px; line-height: 1.5;
+    margin-bottom: 22px;
+  }
+  .choice .next {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--accent-2);
+    margin-top: auto;
+  }
+  .choice .next .arrow { transition: transform .25s ease; }
+  .choice:hover .next .arrow { transform: translateX(4px); }
+  .choice .stats-mini {
+    display: flex; gap: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    margin-bottom: 18px;
+  }
+  .stats-mini .m .v { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--ink-0); }
+  .stats-mini .m .l { font-family: 'Geist Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-3); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 48px 32px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--ink-3); font-size: 12px;
+    font-family: 'Geist Mono', monospace;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    flex-wrap: wrap; gap: 20px;
+  }
+  footer .l { display: flex; gap: 24px; }
+
+  /* Scroll reveal */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1); }
+  .reveal.in { opacity: 1; transform: none; }
+  .reveal.d1 { transition-delay: .1s; }
+  .reveal.d2 { transition-delay: .2s; }
+  .reveal.d3 { transition-delay: .3s; }
+  .reveal.d4 { transition-delay: .4s; }
+
+  @media (max-width: 900px) {
+    .stat-card, .stat-card.lg { grid-column: span 6; }
+    .duo, .impact { grid-template-columns: 1fr; }
+    .flow-row { grid-template-columns: 1fr 1fr; }
+    .nav-links { display: none; }
+    section { padding: 80px 20px; }
+    .onboard-panel { padding: 40px 24px; }
+    .choice-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav scrolled" id="nav">
+  <div class="brand">
+    <span class="mark"></span>
+    <span>Nuvest</span>
+  </div>
+  <div class="nav-links">
+    <a href="#platform">Platform</a>
+    <a href="#flow">How it works</a>
+    <a href="#impact">Impact</a>
+    <a href="#stack">Stack</a>
+  </div>
+  <button class="nav-cta" onclick="openOnboard()">Get Started →</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-orb-wrap" aria-hidden="false">
+    <canvas id="numberSphere"></canvas>
+  </div>
+
+  <div class="eyebrow"><span class="dot"></span>AI + Blockchain · Trade Finance for India</div>
+
+  <h1 class="hero-h1">
+    <span class="w w-l" data-dir="l">AI</span>
+    <span class="w w-r" data-dir="r">investing</span>
+    <span class="w w-l" data-dir="l">meets</span>
+    <em class="w w-r" data-dir="r">SME</em>
+    <span class="w w-l accent" data-dir="l" style="color: rgb(68, 93, 153)">liquidity.</span>
+  </h1>
+
+  <p class="lead">
+    Nuvest is two products in one platform — an AI portfolio copilot for 80M+ Indian retail investors,
+    and a blockchain-settled invoice financing marketplace that unlocks working capital for 63M+ MSMEs.
+  </p>
+
+  <div class="cta-row">
+    <button class="btn primary" onclick="openOnboard()" style="color: rgba(5, 5, 5, 0.95)">
+      Get Started
+      <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+    </button>
+    <a href="#platform" class="btn">
+      Explore platform
+      <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
+    </a>
+  </div>
+
+
+</section>
+
+<!-- STATS -->
+<section id="platform">
+  <div class="wrap">
+    <div class="section-head reveal in">
+      <div class="section-kicker">01 · The opportunity</div>
+      <h2 class="section-title split"><span class="sw" data-dir="l">A</span> <em class="sw" data-dir="r">20 lakh crore</em> <span class="sw" data-dir="l">capital gap —</span> <span class="sw" data-dir="r">and an 80M-strong</span> <span class="sw" data-dir="l">investor base waiting</span> <span class="sw" data-dir="r">for better tools.</span></h2>
+    </div>
+    <div class="stats">
+      <div class="stat-card reveal in">
+        <div class="stat-label">MSMEs in India</div>
+        <div class="stat-num">63M<span class="unit">+</span></div>
+      </div>
+      <div class="stat-card reveal d1 in">
+        <div class="stat-label">Retail investors</div>
+        <div class="stat-num">80M<span class="unit">+</span></div>
+      </div>
+      <div class="stat-card accent lg reveal d2 in">
+        <div class="stat-label">Working capital gap</div>
+        <div class="stat-num">₹20L Cr<span class="unit">addressable</span></div>
+      </div>
+      <div class="stat-card reveal in">
+        <div class="stat-label">Avg. invoice wait</div>
+        <div class="stat-num">60<span class="unit">days</span></div>
+      </div>
+      <div class="stat-card reveal d1 in">
+        <div class="stat-label">Target investor yield</div>
+        <div class="stat-num">12–18<span class="unit">% p.a.</span></div>
+      </div>
+      <div class="stat-card reveal d2 in">
+        <div class="stat-label">Min ticket size</div>
+        <div class="stat-num">₹1,000<span class="unit">fractional</span></div>
+      </div>
+      <div class="stat-card reveal d3 in">
+        <div class="stat-label">Settlement layer</div>
+        <div class="stat-num" style="font-size: 28px; line-height: 1.2; font-family: 'Geist', sans-serif;">Polygon<br><span style="color:var(--ink-3); font-size:14px">+ IPFS</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORM DUO -->
+<section>
+  <div class="wrap">
+    <div class="section-head reveal in">
+      <div class="section-kicker">02 · The platform</div>
+      <h2 class="section-title split"><span class="sw" data-dir="l">Two products,</span> <em class="sw" data-dir="r">one</em> <span class="sw" data-dir="l">capital flywheel.</span></h2>
+    </div>
+    <div class="duo">
+      <div class="product-card reveal in">
+        <span class="badge">
+</span>
+        <h3>AI Portfolio <em>Copilot</em></h3>
+        <p>India-specific AI investment advice with live NSE/BSE data. Tax optimisation, SIP guidance, and natural-language queries for every investor level.</p>
+        <div class="feats">
+          <div class="feat"><span class="tick"></span><span class="k">01</span><span>Natural language queries — "How much ELSS for 80C?"</span></div>
+          <div class="feat"><span class="tick"></span><span class="k">02</span><span>Live NSE/BSE tracking via Zerodha Kite Connect</span></div>
+          <div class="feat"><span class="tick"></span><span class="k">03</span><span>LTCG / STCG / indexation-aware advice</span></div>
+          <div class="feat"><span class="tick"></span><span class="k">04</span><span>SIP optimiser + fiscal year-end rebalancing alerts</span></div>
+        </div>
+      </div>
+
+      <div class="product-card reveal d1 in">
+        <span class="badge"></span>
+        <h3>Invoice Financing <em>Marketplace</em></h3>
+        <p>SMEs get cash in minutes against unpaid invoices. Tokenised on Polygon, risk-scored by AI, settled by smart contracts. No banks. No collateral.</p>
+        <div class="feats">
+          <div class="feat"><span class="tick"></span><span class="k">01</span><span>SME uploads invoice → AI scores risk (XGBoost + SHAP)</span></div>
+          <div class="feat"><span class="tick"></span><span class="k">02</span><span>Invoice tokenised on Polygon — tamper-proof record</span></div>
+          <div class="feat"><span class="tick"></span><span class="k">03</span><span>Investors fund invoices at a discount via marketplace</span></div>
+          <div class="feat"><span class="tick"></span><span class="k">04</span><span>Smart contract auto-settles on due date — trustless</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="wrap">
+    <div class="section-head reveal in">
+      <div class="section-kicker">03 · How it works</div>
+      <h2 class="section-title split"><span class="sw" data-dir="l">From</span> <em class="sw" data-dir="r">invoice</em> <span class="sw" data-dir="l">to settled yield —</span> <span class="sw" data-dir="r">in five steps.</span></h2>
+    </div>
+    <div class="flow reveal d1 in">
+      <div class="flow-label">SME Flow</div>
+      <div class="flow-row">
+        <div class="flow-step">
+          <div class="idx">01</div>
+          <div class="name">Upload Invoice</div>
+          <div class="desc">SME · Dashboard</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">02</div>
+          <div class="name">AI Risk Score</div>
+          <div class="desc">XGBoost + SHAP</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">03</div>
+          <div class="name">Token Minted</div>
+          <div class="desc">Polygon · IPFS</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">04</div>
+          <div class="name">Investors Fund</div>
+          <div class="desc">Marketplace · Live</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">05</div>
+          <div class="name">Auto-Settle</div>
+          <div class="desc">Smart contract</div>
+        </div>
+      </div>
+
+      <div class="flow-label" style="margin-top:36px">Investor Flow</div>
+      <div class="flow-row">
+        <div class="flow-step">
+          <div class="idx">01</div>
+          <div class="name">Browse Tokens</div>
+          <div class="desc">Curated feed</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">02</div>
+          <div class="name">Pick Risk &amp; Yield</div>
+          <div class="desc">12–18% bands</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">03</div>
+          <div class="name">Fund via Wallet</div>
+          <div class="desc">MetaMask · UPI</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">04</div>
+          <div class="name">Earn Yield</div>
+          <div class="desc">~60 day tenor</div>
+          <div class="flow-arrow">→</div>
+        </div>
+        <div class="flow-step">
+          <div class="idx">05</div>
+          <div class="name">Reinvest</div>
+          <div class="desc">Compound</div>
+        </div>
+      </div>
+
+      <div class="example">
+        <b>Example ·</b> ₹10L invoice → AI scores it → Investors fund ₹9.3L → SME gets cash today → Smart contract releases ₹10L to investors in 60 days. No banks. No waiting.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section id="impact">
+  <div class="wrap">
+    <div class="section-head reveal in">
+      <div class="section-kicker">04 · Impact</div>
+      <h2 class="section-title split"><span class="sw" data-dir="l">Value,</span> <em class="sw" data-dir="r">three ways.</em></h2>
+    </div>
+    <div class="impact">
+      <div class="impact-card reveal in">
+        <div>
+          <div class="section-kicker" style="margin-bottom:18px">For SMEs</div>
+          <h4>Working capital, on tap.</h4>
+        </div>
+        <ul>
+          <li>Instant liquidity against invoices — no collateral</li>
+          <li>Cash in minutes, not weeks</li>
+          <li>Verifiable on-chain credit history</li>
+          <li>Formal finance for 63M+ MSMEs</li>
+        </ul>
+      </div>
+      <div class="impact-card reveal d1 in">
+        <div>
+          <div class="section-kicker" style="margin-bottom:18px">For Investors</div>
+          <h4>A new yield asset class.</h4>
+        </div>
+        <ul>
+          <li>12–18% annualised on invoice tokens</li>
+          <li>Low-correlation alternative asset</li>
+          <li>AI-guided portfolio for Indian market</li>
+          <li>Fractional investing from ₹1,000</li>
+        </ul>
+      </div>
+      <div class="impact-card reveal d2 in">
+        <div>
+          <div class="section-kicker" style="margin-bottom:18px">For India</div>
+          <h4>Closing the capital gap.</h4>
+        </div>
+        <ul>
+          <li>Addresses ₹20L Cr working capital shortfall</li>
+          <li>Financial inclusion for 63M+ MSMEs</li>
+          <li>AI literacy for 80M+ retail investors</li>
+          <li>Aligned with RBI digital trade finance push</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="cta-section" id="start">
+  <div class="wrap">
+    <div class="reveal in">
+      <div class="section-kicker" style="justify-content:center;display:inline-flex">Ready when you are</div>
+      <h2 class="section-title" style="text-align:center; max-width: 22ch; margin: 24px auto 40px;">
+        Pick a <em>side</em> of the marketplace.
+      </h2>
+      <p style="color:var(--ink-2); max-width: 54ch; margin: 0 auto 44px; font-size: 16px; line-height: 1.6;">
+        Whether you need working capital today, or you want to earn 12–18% yield on tokenised invoices — Nuvest gets you started in minutes.
+      </p>
+      <button class="btn primary" onclick="openOnboard()" style="font-size:15px; padding: 16px 30px;">
+        Get Started
+        <svg class="arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"></path></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- WALLET DASHBOARD -->
+<section id="wallet" style="padding-top: 40px;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-kicker">05 · Investor dashboard preview</div>
+      <h2 class="section-title split"><span class="sw" data-dir="l">Your wallet,</span> <em class="sw" data-dir="r">live.</em></h2>
+    </div>
+    <div class="wallet-grid reveal d1">
+      <div class="wallet-card wallet-main">
+        <div class="wc-head">
+          <div class="wc-net">
+            <span class="wc-dot"></span>
+            <span>Polygon Mainnet</span>
+          </div>
+          <button class="wc-addr" title="Click to copy">
+            <span>0x8F3c…0xA92d</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          </button>
+        </div>
+        <div class="wc-balance">
+          <div class="wc-label">Total balance</div>
+          <div class="wc-amt">
+            <span class="wc-num">2.847</span>
+            <span class="wc-unit">ETH</span>
+          </div>
+          <div class="wc-usd">≈ ₹8,42,500 · <span class="wc-delta up">+3.24%</span> today</div>
+        </div>
+        <div class="wc-actions">
+          <button class="wc-btn primary">Connect Wallet</button>
+          <button class="wc-btn">Fund Invoice</button>
+          <button class="wc-btn ghost">Withdraw</button>
+        </div>
+        <div class="wc-assets">
+          <div class="wc-asset">
+            <div class="wc-asset-icon eth">Ξ</div>
+            <div class="wc-asset-meta"><div>Ethereum</div><div class="k">ETH</div></div>
+            <div class="wc-asset-val"><div>2.847</div><div class="k">₹8.4L</div></div>
+          </div>
+          <div class="wc-asset">
+            <div class="wc-asset-icon matic">M</div>
+            <div class="wc-asset-meta"><div>Polygon</div><div class="k">MATIC</div></div>
+            <div class="wc-asset-val"><div>1,240.5</div><div class="k">₹1.1L</div></div>
+          </div>
+          <div class="wc-asset">
+            <div class="wc-asset-icon usdc">$</div>
+            <div class="wc-asset-meta"><div>USD Coin</div><div class="k">USDC</div></div>
+            <div class="wc-asset-val"><div>8,420.00</div><div class="k">₹7.0L</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wallet-card wallet-tx">
+        <div class="wc-head">
+          <div class="wc-title">Recent activity</div>
+          <span class="wc-link">View all →</span>
+        </div>
+        <div class="tx-list">
+          <div class="tx">
+            <div class="tx-icon in"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></div>
+            <div class="tx-meta">
+              <div class="tx-name">Invoice #INV-8842 settled</div>
+              <div class="tx-sub">From 0x8F3c… · 2h ago</div>
+            </div>
+            <div class="tx-val">
+              <div class="tx-amt up">+0.412 ETH</div>
+              <div class="tx-status confirmed">Confirmed</div>
+            </div>
+          </div>
+          <div class="tx">
+            <div class="tx-icon out"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+            <div class="tx-meta">
+              <div class="tx-name">Funded invoice token NUV-2201</div>
+              <div class="tx-sub">To marketplace contract · 6h ago</div>
+            </div>
+            <div class="tx-val">
+              <div class="tx-amt down">−1.000 ETH</div>
+              <div class="tx-status pending">Pending</div>
+            </div>
+          </div>
+          <div class="tx">
+            <div class="tx-icon in"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></div>
+            <div class="tx-meta">
+              <div class="tx-name">Yield payout · Token NUV-1994</div>
+              <div class="tx-sub">Smart contract auto-settle · 1d ago</div>
+            </div>
+            <div class="tx-val">
+              <div class="tx-amt up">+0.087 ETH</div>
+              <div class="tx-status confirmed">Confirmed</div>
+            </div>
+          </div>
+          <div class="tx">
+            <div class="tx-icon out"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+            <div class="tx-meta">
+              <div class="tx-name">Gas · Approve USDC</div>
+              <div class="tx-sub">Polygon · 2d ago</div>
+            </div>
+            <div class="tx-val">
+              <div class="tx-amt down">−0.0012 MATIC</div>
+              <div class="tx-status confirmed">Confirmed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .wallet-grid {
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 900px) { .wallet-grid { grid-template-columns: 1fr; } }
+  .wallet-card {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(14,23,48,0.7), rgba(10,16,32,0.4));
+    padding: 28px;
+  }
+  .wc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .wc-net {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--ink-2);
+    padding: 6px 12px; border: 1px solid var(--line-2); border-radius: 999px;
+    background: rgba(255,255,255,0.02);
+  }
+  .wc-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #ff6bb3;
+    box-shadow: 0 0 8px #ff6bb3;
+    animation: pulse 2s infinite;
+  }
+  .wc-addr {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Geist Mono', monospace; font-size: 12px;
+    padding: 8px 14px; border-radius: 999px;
+    border: 1px solid var(--line-2);
+    background: rgba(255,255,255,0.03);
+    color: var(--ink-1); cursor: pointer;
+    transition: all .2s;
+  }
+  .wc-addr:hover { background: rgba(255,107,179,0.08); border-color: rgba(255,107,179,0.35); color: #fff; }
+  .wc-title { font-family: 'Instrument Serif', serif; font-size: 22px; }
+  .wc-link {
+    font-family: 'Geist Mono', monospace; font-size: 11px;
+    color: var(--ink-2); letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer;
+  }
+  .wc-link:hover { color: var(--ink-0); }
+  .wc-label { font-family: 'Geist Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 10px; }
+  .wc-amt { display: flex; align-items: baseline; gap: 10px; }
+  .wc-num { font-family: 'Instrument Serif', serif; font-size: 64px; line-height: 1; letter-spacing: -0.02em; }
+  .wc-unit { font-family: 'Geist Mono', monospace; font-size: 14px; letter-spacing: 0.15em; color: var(--ink-2); }
+  .wc-usd { font-size: 13px; color: var(--ink-2); margin-top: 10px; }
+  .wc-delta.up { color: #6ee7a7; }
+  .wc-actions { display: flex; gap: 10px; margin: 26px 0; flex-wrap: wrap; }
+  .wc-btn {
+    font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 500;
+    padding: 12px 20px; border-radius: 12px;
+    border: 1px solid var(--line-2);
+    background: rgba(255,255,255,0.03);
+    color: var(--ink-0); cursor: pointer;
+    transition: all .2s;
+  }
+  .wc-btn:hover { background: rgba(255,255,255,0.07); }
+  .wc-btn.primary {
+    background: linear-gradient(180deg, #ff6bb3, #d43b8a);
+    border-color: transparent;
+    color: #1a0510;
+    font-weight: 600;
+    box-shadow: 0 8px 24px -6px rgba(212,59,138,0.5), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .wc-btn.primary:hover { box-shadow: 0 12px 32px -6px rgba(212,59,138,0.75), inset 0 1px 0 rgba(255,255,255,0.45); transform: translateY(-1px); }
+  .wc-btn.ghost { background: transparent; }
+  .wc-assets { display: flex; flex-direction: column; border-top: 1px solid var(--line); padding-top: 8px; }
+  .wc-asset {
+    display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+  }
+  .wc-asset:last-child { border-bottom: none; }
+  .wc-asset-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: 'Instrument Serif', serif; font-size: 18px;
+    background: rgba(91,140,255,0.12); color: var(--accent-2);
+    border: 1px solid rgba(122,162,255,0.25);
+  }
+  .wc-asset-icon.eth { background: rgba(122,162,255,0.15); color: #a8c0ff; }
+  .wc-asset-icon.matic { background: rgba(160,107,255,0.15); color: #c6a1ff; border-color: rgba(198,161,255,0.3); }
+  .wc-asset-icon.usdc { background: rgba(110,231,167,0.1); color: #6ee7a7; border-color: rgba(110,231,167,0.3); }
+  .wc-asset-meta { font-size: 14px; }
+  .wc-asset-meta .k { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--ink-3); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+  .wc-asset-val { text-align: right; font-family: 'Geist Mono', monospace; font-size: 13px; }
+  .wc-asset-val .k { font-size: 10px; color: var(--ink-3); margin-top: 2px; }
+
+  .tx-list { display: flex; flex-direction: column; }
+  .tx {
+    display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+  }
+  .tx:last-child { border-bottom: none; }
+  .tx-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: grid; place-items: center;
+  }
+  .tx-icon.in  { background: rgba(110,231,167,0.1); color: #6ee7a7; border: 1px solid rgba(110,231,167,0.25); }
+  .tx-icon.out { background: rgba(255,107,179,0.1); color: #ff6bb3; border: 1px solid rgba(255,107,179,0.3); }
+  .tx-name { font-size: 14px; color: var(--ink-0); }
+  .tx-sub { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--ink-3); margin-top: 3px; letter-spacing: 0.08em; }
+  .tx-val { text-align: right; }
+  .tx-amt { font-family: 'Geist Mono', monospace; font-size: 13px; }
+  .tx-amt.up { color: #6ee7a7; }
+  .tx-amt.down { color: #ff6bb3; }
+  .tx-status {
+    display: inline-block; margin-top: 5px;
+    font-family: 'Geist Mono', monospace; font-size: 9px;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .tx-status.confirmed { background: rgba(110,231,167,0.1); color: #6ee7a7; border: 1px solid rgba(110,231,167,0.2); }
+  .tx-status.pending { background: rgba(255,107,179,0.1); color: #ff6bb3; border: 1px solid rgba(255,107,179,0.3); }
+</style>
+
+<footer>
+  <div class="l">
+    <span>© Nuvest · Team BMSCE</span>
+    <span>Athernex 2026</span>
+  </div>
+  <div class="l">
+    <span>Polygon Testnet</span>
+    <span>RBI-aligned</span>
+  </div>
+</footer>
+
+<!-- ONBOARDING OVERLAY -->
+<div class="onboard" id="onboard" role="dialog" aria-modal="true" aria-labelledby="onb-title">
+  <div class="onboard-panel">
+    <button class="onboard-close" onclick="closeOnboard()" aria-label="Close">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+    </button>
+    <div class="kicker">Welcome to Nuvest</div>
+    <h2 id="onb-title">How would you like to <em>begin?</em></h2>
+    <p class="sub">Nuvest powers both sides of the marketplace. Pick the path that fits you — you can always add the other later.</p>
+
+    <div class="choice-grid">
+      <button class="choice" onmousemove="mm(event,this)" onclick="pick('sme')">
+        <div>
+          <div class="icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M3 21V9l9-6 9 6v12"></path>
+              <path d="M9 21v-8h6v8"></path>
+              <path d="M3 13h18"></path>
+            </svg>
+          </div>
+          <span class="tag">Path · A</span>
+          <h3>Get Started as an <em>SME</em></h3>
+          <p>Upload an invoice, get an AI risk score, and have investors fund you in minutes — no collateral, no bank queues.</p>
+        </div>
+        <div>
+          <div class="stats-mini">
+            <div class="m"><div class="v">~Minutes</div><div class="l">Time to cash</div></div>
+            <div class="m"><div class="v">₹0</div><div class="l">Collateral</div></div>
+            <div class="m"><div class="v">On-chain</div><div class="l">Credit record</div></div>
+          </div>
+          <span class="next">Continue as SME <span class="arrow">→</span></span>
+        </div>
+      </button>
+
+      <button class="choice" onmousemove="mm(event,this)" onclick="pick('investor')">
+        <div>
+          <div class="icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M3 17l6-6 4 4 8-8"></path>
+              <path d="M14 7h7v7"></path>
+            </svg>
+          </div>
+          <span class="tag">Path · B</span>
+          <h3>Get Started as a <em>Retail Investor</em></h3>
+          <p>Browse risk-scored invoice tokens, fund from ₹1,000, and earn 12–18% annualised yield backed by smart-contract settlement.</p>
+        </div>
+        <div>
+          <div class="stats-mini">
+            <div class="m"><div class="v">12–18%</div><div class="l">Target yield</div></div>
+            <div class="m"><div class="v">₹1,000</div><div class="l">Min ticket</div></div>
+            <div class="m"><div class="v">60 days</div><div class="l">Avg tenor</div></div>
+          </div>
+          <span class="next">Continue as Investor <span class="arrow">→</span></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Nav scrolled state
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 20);
+  });
+
+  // Reveal on scroll (re-trigger on every scroll in/out)
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      e.target.classList.toggle('in', e.isIntersecting);
+    }
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Parallax on orb + headline scroll-reveal from sides
+  const orbWrap = document.querySelector('.hero-orb-wrap');
+  const heroWords = Array.from(document.querySelectorAll('.hero-h1 .w'));
+  // expose scroll progress globally so number-sphere can read it each frame
+  window.__heroScroll = 0;
+  function onScrollHero() {
+    const y = window.scrollY;
+    const vh = window.innerHeight;
+    // progress 0..1 across first viewport; extends slightly past for tail-off
+    const p = Math.min(1.4, Math.max(0, y / (vh * 0.9)));
+    window.__heroScroll = p;
+    if (orbWrap) {
+      // gentle parallax downward, never leaves — canvas handles the spread/fade internally
+      orbWrap.style.transform = `translateY(${y * 0.18}px)`;
+      orbWrap.style.opacity = Math.max(0, 1 - p * 0.85);
+    }
+    // progressively reveal hero words as user scrolls down — works both ways
+    // spread triggers across 0..1 progress, each word animates in AND out on reverse scroll
+    const progress = Math.min(1, Math.max(0, y / (vh * 0.75)));
+    heroWords.forEach((w, i) => {
+      // stagger triggers across full range: first word at 0.04, last at ~0.9
+      const trigger = 0.04 + (i / Math.max(1, heroWords.length - 1)) * 0.75;
+      w.classList.toggle('in', progress >= trigger);
+    });
+  }
+  window.addEventListener('scroll', onScrollHero, { passive: true });
+  // also reveal first word after a short mount delay so the hero isn't blank at rest
+  requestAnimationFrame(() => { setTimeout(onScrollHero, 60); });
+
+  // Side-glide reveal for split section titles (re-triggers on scroll up/down)
+  (function splitReveal(){
+    const titles = document.querySelectorAll('.section-title.split');
+    if (!titles.length) return;
+    const timers = new WeakMap();
+    const sio = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        const words = e.target.querySelectorAll('.sw');
+        // clear any pending staggered adds from prior pass
+        const prev = timers.get(e.target) || [];
+        prev.forEach(clearTimeout);
+        const next = [];
+        if (e.isIntersecting) {
+          words.forEach((w, i) => {
+            next.push(setTimeout(() => w.classList.add('in'), i * 90));
+          });
+        } else {
+          words.forEach(w => w.classList.remove('in'));
+        }
+        timers.set(e.target, next);
+      });
+    }, { threshold: 0.25 });
+    titles.forEach(t => sio.observe(t));
+  })();
+
+  // Spotlight follow on all stat cards
+  (function spotlight(){
+    const cards = document.querySelectorAll('.stat-card');
+    if (!cards.length) return;
+    document.addEventListener('pointermove', (e) => {
+      cards.forEach(card => {
+        const r = card.getBoundingClientRect();
+        if (e.clientX < r.left - 200 || e.clientX > r.right + 200 ||
+            e.clientY < r.top - 200 || e.clientY > r.bottom + 200) return;
+        const x = ((e.clientX - r.left) / r.width) * 100;
+        const y = ((e.clientY - r.top) / r.height) * 100;
+        const hue = 200 + (x / 100) * 60;
+        card.style.setProperty('--spot-x', x + '%');
+        card.style.setProperty('--spot-y', y + '%');
+        card.style.setProperty('--spot-hue', hue.toFixed(1));
+      });
+    }, { passive: true });
+  })();
+
+  // ============================================
+  // NUMBER SPHERE — particles confined to an invisible sphere, wave physics
+  // ============================================
+  (function numberSphere(){
+    const canvas = document.getElementById('numberSphere');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const wrap = canvas.parentElement;
+
+    let DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W = 0, H = 0, CX = 0, CY = 0, R = 0;
+
+    // Numeric tokens — finance-themed
+    const pool = [
+      '12%','18%','60d','₹10L','₹1K','63M','80M','AI','2.4x','0.3%','₹20L','9.3','7.8%','14.2','SME',
+      '0x8F','ETH','NSE','BSE','₹5L','4.5%','11.1','25%','₹2K','RBI','NPS','ELSS','SIP','NAV','LTCG',
+      '1.8x','3.2','₹50K','8.7','KYC','1.4','6.2%','15%','20d','90d','₹100','50M','0.9','16%','+3.2%'
+    ];
+
+    const COUNT = 320;
+    const particles = [];
+
+    // Fibonacci sphere distribution — even coverage
+    function initParticles() {
+      particles.length = 0;
+      const golden = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < COUNT; i++) {
+        const y = 1 - (i / (COUNT - 1)) * 2;
+        const rr = Math.sqrt(1 - y*y);
+        const theta = golden * i;
+        const x = Math.cos(theta) * rr;
+        const z = Math.sin(theta) * rr;
+        particles.push({
+          // base position on unit sphere
+          bx: x, by: y, bz: z,
+          // current displacement from base (wave/velocity)
+          dx: 0, dy: 0, dz: 0,
+          vx: 0, vy: 0, vz: 0,
+          phase: Math.random() * Math.PI * 2,
+          speed: 0.5 + Math.random() * 0.9,
+          label: pool[i % pool.length],
+          size: 7.5 + Math.random() * 3.5,
+          accent: Math.random() < 0.14
+        });
+      }
+    }
+    initParticles();
+
+    function resize() {
+      const rect = wrap.getBoundingClientRect();
+      W = rect.width; H = rect.height;
+      CX = W/2; CY = H/2;
+      R = Math.min(W, H) * 0.45;
+      canvas.width = W * DPR;
+      canvas.height = H * DPR;
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Rotation state — drag to spin
+    let rotY = 0, rotX = 0;
+    let targetRotYVel = 0.003, targetRotXVel = 0.0005;
+    let rotYVel = 0.003, rotXVel = 0.0005;
+    let dragging = false, lastX = 0, lastY = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      dragging = true; lastX = e.clientX; lastY = e.clientY;
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointerup', () => { dragging = false; });
+    canvas.addEventListener('pointercancel', () => { dragging = false; });
+
+    // Mouse influence — nearest particles get a radial push
+    let mx = -1000, my = -1000, inside = false;
+    canvas.addEventListener('pointermove', (e) => {
+      const r = canvas.getBoundingClientRect();
+      mx = e.clientX - r.left;
+      my = e.clientY - r.top;
+      inside = true;
+      if (dragging) {
+        rotY += (e.clientX - lastX) * 0.006;
+        rotX += (e.clientY - lastY) * 0.006;
+        rotX = Math.max(-1.2, Math.min(1.2, rotX));
+        lastX = e.clientX; lastY = e.clientY;
+      }
+    });
+    canvas.addEventListener('pointerleave', () => { inside = false; mx = my = -1000; });
+
+    // Determine current mood → particle color
+    function currentInk() {
+      const styles = getComputedStyle(document.documentElement);
+      const accent2 = styles.getPropertyValue('--accent-2').trim() || '#7aa2ff';
+      const accent  = styles.getPropertyValue('--accent').trim()  || '#5b8cff';
+      return { accent, accent2 };
+    }
+
+    let t0 = performance.now();
+
+    function frame(now) {
+      const t = (now - t0) / 1000;
+      // scroll progress drives fade only (no spread)
+      const sp = Math.min(1.4, window.__heroScroll || 0);
+      const globalAlpha = Math.max(0, 1 - sp * 0.95);
+
+      // auto-rotation eased back in after drag
+      if (!dragging) {
+        rotYVel += (targetRotYVel - rotYVel) * 0.02;
+        rotXVel += (targetRotXVel - rotXVel) * 0.02;
+        rotY += rotYVel;
+        rotX += rotXVel * Math.sin(t * 0.3);
+      }
+
+      ctx.globalAlpha = globalAlpha;
+      ctx.clearRect(0, 0, W, H);
+
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const { accent, accent2 } = currentInk();
+
+      // soft halo behind sphere
+      const halo = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 1.4);
+      halo.addColorStop(0, 'rgba(91,140,255,0.08)');
+      halo.addColorStop(1, 'rgba(91,140,255,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(CX, CY, R * 1.4, 0, Math.PI * 2); ctx.fill();
+
+      // compute + sort particles by z
+      const rendered = [];
+      for (const p of particles) {
+        // wave displacement along radial direction (breathing / ripple)
+        const wave = Math.sin(t * p.speed + p.phase) * 0.06;
+        const radial = 1 + wave;
+
+        // target position on displaced sphere
+        let tx = p.bx * radial, ty = p.by * radial, tz = p.bz * radial;
+
+        // physics spring back to target, plus inertial velocity from cursor force
+        // apply cursor force in 3D: project mouse to sphere-plane, push nearby particles outward
+        // first rotate current into world space to compute screen pos
+        let wx = tx * cosY + tz * sinY;
+        let wz = -tx * sinY + tz * cosY;
+        let wy = ty * cosX - wz * sinX;
+        wz = ty * sinX + wz * cosX;
+
+        // screen coords
+        const persp = 1 / (1.8 - wz * 0.8);
+        const sx = CX + wx * R * persp;
+        const sy = CY + wy * R * persp;
+
+        // cursor force (screen-space), diminished by distance
+        if (inside) {
+          const ddx = sx - mx, ddy = sy - my;
+          const d = Math.sqrt(ddx*ddx + ddy*ddy);
+          const influence = Math.max(0, 1 - d / 220);
+          if (influence > 0) {
+            const pushMag = influence * 0.055;
+            // push in base-space along radial direction (outward)
+            p.vx += p.bx * pushMag;
+            p.vy += p.by * pushMag;
+            p.vz += p.bz * pushMag;
+          }
+        }
+
+        // spring back to base (in the displacement offsets)
+        const k = 0.22, damp = 0.72;
+        p.vx += -p.dx * k;
+        p.vy += -p.dy * k;
+        p.vz += -p.dz * k;
+        p.vx *= damp; p.vy *= damp; p.vz *= damp;
+        p.dx += p.vx; p.dy += p.vy; p.dz += p.vz;
+
+        // final position with wave + spring offset
+        let fx = p.bx * radial + p.dx;
+        let fy = p.by * radial + p.dy;
+        let fz = p.bz * radial + p.dz;
+
+        // re-rotate with offset
+        let rwx = fx * cosY + fz * sinY;
+        let rwz = -fx * sinY + fz * cosY;
+        let rwy = fy * cosX - rwz * sinX;
+        rwz = fy * sinX + rwz * cosX;
+
+        const rPersp = 1 / (1.8 - rwz * 0.8);
+        const rsx = CX + rwx * R * rPersp;
+        const rsy = CY + rwy * R * rPersp;
+
+        rendered.push({ p, sx: rsx, sy: rsy, z: rwz, persp: rPersp });
+      }
+
+      // sort back-to-front
+      rendered.sort((a, b) => a.z - b.z);
+
+      // draw
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (const item of rendered) {
+        const { p, sx, sy, z, persp } = item;
+        const alpha = Math.max(0.08, (z + 1) * 0.5);
+        const size = p.size * persp;
+        ctx.font = `500 ${size}px 'Manrope', 'Inter', sans-serif`;
+        if (p.accent) {
+          ctx.fillStyle = `${accent2}${Math.round(alpha * 255).toString(16).padStart(2,'0')}`;
+          ctx.shadowColor = accent;
+          ctx.shadowBlur = 12 * alpha;
+        } else {
+          const v = Math.round(180 + 75 * alpha);
+          ctx.fillStyle = `rgba(${v},${v+10},255,${alpha})`;
+          ctx.shadowBlur = 0;
+        }
+        ctx.fillText(p.label, sx, sy);
+      }
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    // reinit on mood change so palette picks up new CSS vars (no-op, palette is read every frame)
+  })();
+
+  // Onboarding modal
+  const onb = document.getElementById('onboard');
+  function openOnboard() {
+    onb.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeOnboard() {
+    onb.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  onb.addEventListener('click', (e) => { if (e.target === onb) closeOnboard(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOnboard(); });
+
+  // Mouse-follow glow on choice cards
+  function mm(e, el) {
+    const r = el.getBoundingClientRect();
+    el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }
+
+  function pick(kind) {
+    const panel = onb.querySelector('.onboard-panel');
+    panel.style.transition = 'transform .4s ease, opacity .4s ease';
+    panel.style.opacity = 0;
+    panel.style.transform = 'translateY(-10px) scale(0.98)';
+    setTimeout(() => {
+      panel.innerHTML = successPanel(kind);
+      panel.style.opacity = 1;
+      panel.style.transform = 'translateY(0) scale(1)';
+    }, 380);
+  }
+
+  function successPanel(kind) {
+    const isSME = kind === 'sme';
+    const title = isSME ? 'Let\u2019s fund your <em>invoice.</em>' : 'Let\u2019s build your <em>yield</em> stack.';
+    const sub = isSME
+      ? 'Next, we\u2019ll verify your business, connect your GST, and score your first invoice in under 2 minutes.'
+      : 'Next, we\u2019ll set your risk profile, connect MetaMask or UPI, and show you a live feed of available invoice tokens.';
+    const steps = isSME
+      ? [
+          ['01', 'Verify business', 'GSTIN + PAN'],
+          ['02', 'Upload invoice', 'PDF · IPFS pinning'],
+          ['03', 'AI risk score', 'XGBoost + SHAP'],
+          ['04', 'Go live on marketplace', 'Accept offers']
+        ]
+      : [
+          ['01', 'KYC + risk profile', '2 min'],
+          ['02', 'Connect wallet', 'MetaMask / UPI'],
+          ['03', 'Pick first token', '₹1,000 min'],
+          ['04', 'Earn yield', '60 day cycle']
+        ];
+
+    return `
+      <button class="onboard-close" onclick="closeOnboard()" aria-label="Close">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="kicker">${isSME ? 'SME Track' : 'Investor Track'}</div>
+      <h2>${title}</h2>
+      <p class="sub">${sub}</p>
+
+      <div style="display:grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 32px;">
+        ${steps.map(([i,n,d]) => `
+          <div class="flow-step" style="min-height: 110px;">
+            <div class="idx">${i}</div>
+            <div class="name" style="font-size:16px">${n}</div>
+            <div class="desc">${d}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="btn primary" onclick="alert('Demo · would route to ${isSME ? 'SME' : 'Investor'} onboarding next step')">
+          Continue
+          <svg class="arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn" onclick="backToChoice()">← Back</button>
+      </div>
+    `;
+  }
+
+  function backToChoice() {
+    const panel = onb.querySelector('.onboard-panel');
+    panel.style.opacity = 0;
+    setTimeout(() => {
+      closeOnboard();
+      setTimeout(() => {
+        // restore original panel by reloading section from template
+        location.hash = '';
+        panel.style.opacity = 1;
+        panel.innerHTML = originalPanel;
+        // rebind mousemove
+      }, 60);
+    }, 300);
+  }
+
+  // Cache original panel HTML so we can restore on Back
+  const originalPanel = document.querySelector('#onboard .onboard-panel').innerHTML;
+
+  /* ============================================
+     TWEAKS PANEL — Mood / Atmosphere / Density
+     ============================================ */
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "mood": "neotokyo",
+    "atmosphere": "storm",
+    "density": "dense"
+  }/*EDITMODE-END*/;
+
+  const MOODS = {
+    midnight: {
+      label: 'Cool midnight',
+      vars: {
+        '--bg-0':'#05080f','--bg-1':'#070b17','--bg-2':'#0a1020','--bg-3':'#0e1730',
+        '--accent':'#5b8cff','--accent-2':'#7aa2ff','--accent-deep':'#1a3a8a','--halo':'#3b5fd4',
+        '--orb-core':'200,220,255','--orb-mid':'91,140,255','--orb-deep':'26,58,138'
+      },
+      bodyBg: 'radial-gradient(1200px 600px at 50% -10%, rgba(59,95,212,0.22), transparent 60%),radial-gradient(900px 500px at 80% 40%, rgba(26,58,138,0.18), transparent 60%),radial-gradient(900px 500px at 20% 80%, rgba(59,95,212,0.10), transparent 60%),var(--bg-0)'
+    },
+    violet: {
+      label: 'Electric violet',
+      vars: {
+        '--bg-0':'#08061a','--bg-1':'#0b0822','--bg-2':'#120d35','--bg-3':'#1b1448',
+        '--accent':'#a06bff','--accent-2':'#c6a1ff','--accent-deep':'#3b1a8a','--halo':'#6d3bd4',
+        '--orb-core':'220,195,255','--orb-mid':'160,107,255','--orb-deep':'59,26,138'
+      },
+      bodyBg: 'radial-gradient(1200px 600px at 50% -10%, rgba(109,59,212,0.28), transparent 60%),radial-gradient(900px 500px at 80% 40%, rgba(59,26,138,0.24), transparent 60%),radial-gradient(900px 500px at 20% 80%, rgba(160,107,255,0.12), transparent 60%),var(--bg-0)'
+    },
+    neotokyo: {
+      label: 'Warm neo-tokyo',
+      vars: {
+        '--bg-0':'#0f0810','--bg-1':'#160b14','--bg-2':'#24101d','--bg-3':'#3a1730',
+        '--accent':'#ff6bb3','--accent-2':'#ffb5d6','--accent-deep':'#8a1a58','--halo':'#d43b8a',
+        '--orb-core':'255,210,230','--orb-mid':'255,107,179','--orb-deep':'138,26,88'
+      },
+      bodyBg: 'radial-gradient(1200px 600px at 50% -10%, rgba(212,59,138,0.24), transparent 60%),radial-gradient(900px 500px at 80% 40%, rgba(255,176,74,0.10), transparent 60%),radial-gradient(900px 500px at 20% 80%, rgba(255,107,179,0.14), transparent 60%),var(--bg-0)'
+    }
+  };
+
+  const ATMOS = {
+    calm:    { orbFloat: '8s', meshRot: '40s', orbitSpin: '36s', glow: 1.0, haloBlur: '120px' },
+    pulsing: { orbFloat: '4.2s', meshRot: '22s', orbitSpin: '18s', glow: 1.4, haloBlur: '160px' },
+    storm:   { orbFloat: '2.2s', meshRot: '10s', orbitSpin: '8s',  glow: 2.0, haloBlur: '220px' }
+  };
+
+  const DENSITY = {
+    airy:     { sectionPad: '200px', titleTrack: '0.01em', leadSize: '19px', cardPad: '44px', sectionGap: '88px' },
+    balanced: { sectionPad: '140px', titleTrack: '-0.015em', leadSize: '17px', cardPad: '28px', sectionGap: '64px' },
+    dense:    { sectionPad: '92px',  titleTrack: '-0.03em',  leadSize: '15px', cardPad: '20px', sectionGap: '40px' }
+  };
+
+  function applyTweaks(t) {
+    const root = document.documentElement;
+    const mood = MOODS[t.mood] || MOODS.midnight;
+    const atmos = ATMOS[t.atmosphere] || ATMOS.calm;
+    const dens = DENSITY[t.density] || DENSITY.balanced;
+
+    Object.entries(mood.vars).forEach(([k,v]) => root.style.setProperty(k,v));
+    document.body.style.background = mood.bodyBg;
+
+    // Orb regenerated from palette
+    const orb = document.querySelector('.orb');
+    if (orb) {
+      orb.style.background = `radial-gradient(circle at var(--lx,35%) var(--ly,30%), rgba(${mood.vars['--orb-core']},1), rgba(${mood.vars['--orb-mid']},0.7) 22%, rgba(${mood.vars['--orb-deep']},0.85) 55%, rgba(5,8,15,1) 88%)`;
+      orb.style.boxShadow = `0 0 ${atmos.haloBlur} 20px rgba(${mood.vars['--orb-mid']},${0.35*atmos.glow}), inset -40px -60px 120px rgba(5,8,15,0.7), inset 20px 30px 80px rgba(${mood.vars['--orb-core']},${0.25*atmos.glow})`;
+      orb.style.animationDuration = atmos.orbFloat;
+    }
+    document.querySelectorAll('.orbit').forEach(o => { o.style.animationDuration = atmos.orbitSpin; });
+    const mesh = document.querySelector('.orb-mesh');
+    if (mesh) mesh.style.animationDuration = atmos.meshRot;
+
+    // Density
+    document.querySelectorAll('section').forEach(s => {
+      if (!s.classList.contains('hero')) s.style.padding = `${dens.sectionPad} 32px`;
+    });
+    document.querySelectorAll('.section-head').forEach(h => h.style.marginBottom = dens.sectionGap);
+    document.querySelectorAll('.section-title').forEach(t => t.style.letterSpacing = dens.titleTrack);
+    const lead = document.querySelector('.hero p.lead');
+    if (lead) lead.style.fontSize = dens.leadSize;
+    document.querySelectorAll('.stat-card').forEach(c => c.style.padding = dens.cardPad);
+  }
+
+  function buildTweakUI() {
+    const el = document.createElement('div');
+    el.id = 'tweaks-panel';
+    el.innerHTML = `
+      <style>
+        #tweaks-panel {
+          position: fixed; right: 20px; bottom: 20px; z-index: 250;
+          width: 300px;
+          background: linear-gradient(180deg, rgba(14,23,48,0.95), rgba(10,16,32,0.95));
+          border: 1px solid var(--line-2);
+          border-radius: 18px;
+          padding: 20px;
+          font-family: 'Geist', sans-serif;
+          color: var(--ink-0);
+          backdrop-filter: blur(14px);
+          box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 40px rgba(91,140,255,0.12);
+          display: none;
+        }
+        #tweaks-panel.open { display: block; }
+        #tweaks-panel .th {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 18px;
+        }
+        #tweaks-panel .title {
+          font-family: 'Instrument Serif', serif; font-size: 20px;
+        }
+        #tweaks-panel .x {
+          width: 26px; height: 26px; border-radius: 50%;
+          border: 1px solid var(--line-2); background: transparent;
+          color: var(--ink-1); cursor: pointer;
+          display: grid; place-items: center;
+        }
+        #tweaks-panel .section-label {
+          font-family: 'Geist Mono', monospace; font-size: 9px;
+          letter-spacing: 0.2em; text-transform: uppercase;
+          color: var(--ink-2); margin-bottom: 8px; margin-top: 14px;
+        }
+        #tweaks-panel .seg {
+          display: grid; grid-template-columns: repeat(3,1fr); gap: 4px;
+          background: rgba(0,0,0,0.3); padding: 3px; border-radius: 10px;
+          border: 1px solid var(--line);
+        }
+        #tweaks-panel .seg button {
+          font-family: 'Geist', sans-serif; font-size: 11px;
+          padding: 8px 4px; border-radius: 7px;
+          border: none; background: transparent;
+          color: var(--ink-2); cursor: pointer;
+          transition: all .2s;
+        }
+        #tweaks-panel .seg button.active {
+          background: linear-gradient(180deg, rgba(122,162,255,0.35), rgba(59,95,212,0.25));
+          color: #fff;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+        #tweaks-panel .seg button:hover:not(.active) { color: var(--ink-0); background: rgba(255,255,255,0.04); }
+      </style>
+      <div class="th">
+        <div class="title">Tweaks</div>
+        <button class="x" id="tw-close" aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: rgb(111, 127, 169)"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="section-label">Mood</div>
+      <div class="seg" data-key="mood">
+        <button data-v="midnight">Midnight</button>
+        <button data-v="violet">Violet</button>
+        <button data-v="neotokyo">Neo-Tokyo</button>
+      </div>
+      <div class="section-label">Atmosphere</div>
+      <div class="seg" data-key="atmosphere">
+        <button data-v="calm">Calm</button>
+        <button data-v="pulsing">Pulsing</button>
+        <button data-v="storm">Storm</button>
+      </div>
+      <div class="section-label">Density</div>
+      <div class="seg" data-key="density">
+        <button data-v="airy">Airy</button>
+        <button data-v="balanced">Balanced</button>
+        <button data-v="dense">Dense</button>
+      </div>
+    `;
+    document.body.appendChild(el);
+    return el;
+  }
+
+  const tweakEl = buildTweakUI();
+  let currentTweaks = { ...TWEAK_DEFAULTS };
+
+  function refreshActive() {
+    tweakEl.querySelectorAll('.seg').forEach(seg => {
+      const key = seg.dataset.key;
+      seg.querySelectorAll('button').forEach(b => {
+        b.classList.toggle('active', b.dataset.v === currentTweaks[key]);
+      });
+    });
+  }
+
+  tweakEl.querySelectorAll('.seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      const key = b.parentElement.dataset.key;
+      const v = b.dataset.v;
+      currentTweaks = { ...currentTweaks, [key]: v };
+      applyTweaks(currentTweaks);
+      refreshActive();
+      try {
+        window.parent.postMessage({ type:'__edit_mode_set_keys', edits: { [key]: v } }, '*');
+      } catch(_) {}
+    });
+  });
+
+  document.getElementById('tw-close').addEventListener('click', () => {
+    tweakEl.classList.remove('open');
+    try { window.parent.postMessage({ type:'__edit_mode_dismissed' }, '*'); } catch(_) {}
+  });
+
+  window.addEventListener('message', (ev) => {
+    const d = ev.data;
+    if (!d || typeof d !== 'object') return;
+    if (d.type === '__activate_edit_mode') tweakEl.classList.add('open');
+    else if (d.type === '__deactivate_edit_mode') tweakEl.classList.remove('open');
+  });
+
+  // apply defaults + announce availability
+  applyTweaks(currentTweaks);
+  refreshActive();
+  try { window.parent.postMessage({ type:'__edit_mode_available' }, '*'); } catch(_) {}
+</script>
+
+
+
+</body></html>
