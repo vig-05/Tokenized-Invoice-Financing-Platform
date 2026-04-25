@@ -80,19 +80,7 @@ export default function InvestorMarketplace() {
   }, [kiteModal])
 
   async function handleViewPortfolio() {
-    setKiteChecking(true)
-    try {
-      const data = await fetchSummary('demo_user')
-      if (data?.summary?.is_live) {
-        navigate('/portfolio')
-      } else {
-        setKiteModal(true)
-      }
-    } catch {
-      setKiteModal(true)
-    } finally {
-      setKiteChecking(false)
-    }
+    navigate('/portfolio')
   }
 
   async function handleConnectKite() {
@@ -102,7 +90,7 @@ export default function InvestorMarketplace() {
       const { url } = await res.json()
       window.location.href = url
     } catch {
-      alert('Could not reach backend to get Kite login URL. Make sure the server is running.')
+      alert('Kite Connect not configured. Add KITE_API_KEY to .env to enable live data.')
     }
   }
 
@@ -149,7 +137,9 @@ export default function InvestorMarketplace() {
       }
       setInvoices(items)
     } catch (e) {
-      setLoadError('Could not load invoices from chain — showing demo data')
+      // chain unavailable — fall back to demo data silently
+      setInvoices(DEMO_INVOICES)
+      setLoadError('demo')
     } finally {
       setLoading(false)
     }
@@ -287,7 +277,12 @@ export default function InvestorMarketplace() {
             <SpinIcon /> Loading invoices from Polygon Amoy…
           </div>
         )}
-        {loadError && <div style={s.err}>{loadError} — showing sample data below.</div>}
+        {loadError === 'demo' && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', borderRadius: 99, background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', color: '#fbbf24', fontSize: 12, fontWeight: 500, marginBottom: 16 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fbbf24', flexShrink: 0 }} />
+            Demo data — connect MetaMask on the right network to load live invoices
+          </div>
+        )}
 
         {/* Available invoices */}
         {listed.length > 0 && (

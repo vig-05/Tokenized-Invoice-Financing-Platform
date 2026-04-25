@@ -352,3 +352,43 @@ def compute_summary(holdings: List[Dict]) -> Dict[str, Any]:
 
 def generate_alerts(holdings_summary: Dict) -> List[Dict]:
     return get_alerts(holdings_summary)
+
+
+def get_historical(symbol: str, exchange: str, days: int = 30) -> List[Dict]:
+    """Return OHLCV candles for a symbol using Kite historical_data API."""
+    kite = _ensure_kite()
+    if not kite:
+        return []
+
+    # Find instrument_token from cached holdings
+    instrument_token = None
+    for user_cache in _cache.values():
+        for h in user_cache.get("data", []):
+            if h.get("tradingsymbol") == symbol and h.get("exchange", "NSE") == exchange:
+                instrument_token = h.get("instrument_token")
+                break
+        if instrument_token:
+            break
+
+    if not instrument_token:
+        return []
+
+    try:
+        import datetime
+        to_date   = datetime.date.today()
+        from_date = to_date - datetime.timedelta(days=days + 14)  # extra for weekends
+        raw = kite.historical_data(instrument_token, from_date, to_date, "day")
+        candles = []
+        for c in raw[-(days):]:
+            d = c["date"]
+            date_str = (f"{d.day} {d.strftime('%b')}") if hasattr(d, "strftime") else str(d)[:10]
+            candles.append({
+                "date":  date_str,
+                "open":  round(float(c["open"]),  2),
+                "high":  round(float(c["high"]),  2),
+                "low":   round(float(c["low"]),   2),
+                "close": round(float(c["close"]), 2),
+            })
+        return candles
+    except Exception:
+        return []

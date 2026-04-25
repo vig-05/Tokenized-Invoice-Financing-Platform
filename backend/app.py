@@ -2,7 +2,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import re
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Any, Optional, List
@@ -11,6 +14,7 @@ from model import InvoiceInput, run_scoring
 from portfolio import (
     get_holdings, get_summary, get_alerts,
     get_kite_login_url, get_kite_access_token, set_kite_access_token,
+    get_historical,
 )
 from ai_chat import run_chat, settlement_advice
 
@@ -57,8 +61,24 @@ def kite_login_url():
 def kite_callback(request_token: str):
     try:
         token_data = get_kite_access_token(request_token)
-        set_kite_access_token(token_data["access_token"])
-        return {"success": True}
+        access_token = token_data["access_token"]
+        set_kite_access_token(access_token)
+
+        # Persist to .env so it survives restarts
+        env_path = Path(__file__).parent.parent / ".env"
+        env_text = env_path.read_text(encoding="utf-8")
+        if re.search(r"^KITE_ACCESS_TOKEN\s*=", env_text, re.MULTILINE):
+            env_text = re.sub(
+                r"^(KITE_ACCESS_TOKEN\s*=).*$",
+                f"KITE_ACCESS_TOKEN={access_token}",
+                env_text,
+                flags=re.MULTILINE,
+            )
+        else:
+            env_text += f"\nKITE_ACCESS_TOKEN={access_token}\n"
+        env_path.write_text(env_text, encoding="utf-8")
+
+        return RedirectResponse(url="http://localhost:5175/portfolio?kite=connected")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -77,6 +97,16 @@ def portfolio_summary(user_id: str = "demo_user"):
     alerts = get_alerts(summary)
     holdings = get_holdings(user_id)
     return {"summary": summary, "alerts": alerts, "holdings": holdings}
+
+
+# ── Historical OHLCV ─────────────────────────────────────────────────────────
+
+@app.get("/portfolio/historical")
+def portfolio_historical(symbol: str, exchange: str = "NSE", days: int = 30):
+    candles = get_historical(symbol, exchange, days)
+    if not candles:
+        raise HTTPException(status_code=404, detail="No historical data available")
+    return {"symbol": symbol, "exchange": exchange, "candles": candles}
 
 
 # ── AI Chat ───────────────────────────────────────────────────────────────────

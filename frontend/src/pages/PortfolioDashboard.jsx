@@ -1,10 +1,13 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+} from 'recharts'
 import { fetchSummary, sendChatMessage } from '../utils/api'
 
-const LS_KEY   = 'nuvest_kite_connected'
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+const LS_KEY    = 'nuvest_kite_connected'
+const API_BASE  = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 const POLL_SUM  = 60_000
 const POLL_LIVE = 30_000
 
@@ -32,54 +35,19 @@ const EMPTY_SUMMARY = {
 }
 
 const MOCK_PORTFOLIO = {
-  total_value:    428350,
-  total_invested: 380000,
-  total_pnl:       48350,
-  xirr_pct:         12.4,
-  equity_pct:       0.56,
-  debt_pct:         0.24,
-  gold_pct:         0.11,
-  pension_pct:      0.09,
+  total_value: 428350, total_invested: 380000, total_pnl: 48350, xirr_pct: 12.4,
+  equity_pct: 0.56, debt_pct: 0.24, gold_pct: 0.11, pension_pct: 0.09,
   allocation: { equity: 239876, debt: 102804, gold: 47119, pension: 38551 },
-  elss_invested:  110000,
-  ppf_invested:    40000,
-  remaining_80c:       0,
-  ltcg_this_fy:    18200,
-  stcg_exposure:    9200,
-  is_live:          false,
+  elss_invested: 110000, ppf_invested: 40000, remaining_80c: 0,
+  ltcg_this_fy: 18200, stcg_exposure: 9200, is_live: false,
 }
 
 const MOCK_HOLDINGS = [
-  {
-    tradingsymbol: 'AXISLONG',  exchange: 'NSE', quantity: 150.234,
-    average_price: 55.20,  last_price: 68.45,  pnl: 1988.55,
-    invested_amount: 8292.92,  current_value: 10282.51,
-    return_pct: 23.96, tag: 'ELSS', fund_category: 'ELSS',
-  },
-  {
-    tradingsymbol: 'NIFTYBEES', exchange: 'NSE', quantity: 500,
-    average_price: 182.50, last_price: 234.80, pnl: 26150,
-    invested_amount: 91250, current_value: 117400,
-    return_pct: 28.66, tag: 'Equity', fund_category: 'Index',
-  },
-  {
-    tradingsymbol: 'SGBBSE2031', exchange: 'BSE', quantity: 10,
-    average_price: 4850, last_price: 6120, pnl: 12700,
-    invested_amount: 48500, current_value: 61200,
-    return_pct: 26.19, tag: 'SGB', fund_category: 'SGB',
-  },
-  {
-    tradingsymbol: 'PPF', exchange: 'OFF', quantity: 1,
-    average_price: 50000, last_price: 50000, pnl: 0,
-    invested_amount: 50000, current_value: 50000,
-    return_pct: 0, tag: 'Debt', fund_category: 'PPF',
-  },
-  {
-    tradingsymbol: 'NPS_TIER1', exchange: 'OFF', quantity: 1,
-    average_price: 25000, last_price: 27500, pnl: 2500,
-    invested_amount: 25000, current_value: 27500,
-    return_pct: 10, tag: 'Pension', fund_category: 'NPS',
-  },
+  { tradingsymbol: 'AXISLONG',   exchange: 'NSE', quantity: 150.234, average_price: 55.20, last_price: 68.45, pnl: 1988.55, invested_amount: 8292.92,  current_value: 10282.51, return_pct: 23.96, tag: 'ELSS',   fund_category: 'ELSS',  change: 0.85,  change_percent:  1.26 },
+  { tradingsymbol: 'NIFTYBEES',  exchange: 'NSE', quantity: 500,     average_price: 182.50, last_price: 234.80, pnl: 26150, invested_amount: 91250,    current_value: 117400,   return_pct: 28.66, tag: 'Equity', fund_category: 'Index', change: -1.20, change_percent: -0.51 },
+  { tradingsymbol: 'SGBBSE2031', exchange: 'BSE', quantity: 10,      average_price: 4850,   last_price: 6120,   pnl: 12700, invested_amount: 48500,    current_value: 61200,    return_pct: 26.19, tag: 'SGB',    fund_category: 'SGB',   change: 42.5,  change_percent:  0.70 },
+  { tradingsymbol: 'PPF',        exchange: 'OFF', quantity: 1,       average_price: 50000,  last_price: 50000,  pnl: 0,     invested_amount: 50000,    current_value: 50000,    return_pct: 0,     tag: 'Debt',   fund_category: 'PPF',   change: 0,     change_percent:  0    },
+  { tradingsymbol: 'NPS_TIER1',  exchange: 'OFF', quantity: 1,       average_price: 25000,  last_price: 27500,  pnl: 2500,  invested_amount: 25000,    current_value: 27500,    return_pct: 10,    tag: 'Pension',fund_category: 'NPS',   change: 50,    change_percent:  0.18 },
 ]
 
 function fmt(n) {
@@ -96,10 +64,98 @@ function fmtNum(n) {
   return (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })
 }
 
+function generateMockOHLCV(lastPrice, days = 30) {
+  const data = []
+  let price = lastPrice * (0.88 + Math.random() * 0.06)
+  const now = Date.now()
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now - i * 86400000)
+    if (d.getDay() === 0 || d.getDay() === 6) continue
+    const open  = price
+    const move  = (Math.random() - 0.47) * price * 0.022
+    const close = Math.max(open * 0.96, Math.min(open * 1.04, open + move))
+    const high  = Math.max(open, close) * (1 + Math.random() * 0.007)
+    const low   = Math.min(open, close) * (1 - Math.random() * 0.007)
+    data.push({
+      date:  d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }),
+      open:  +open.toFixed(2),
+      high:  +high.toFixed(2),
+      low:   +low.toFixed(2),
+      close: +close.toFixed(2),
+    })
+    price = close
+  }
+  if (data.length) data[data.length - 1].close = lastPrice
+  return data
+}
+
+function CandlestickChart({ data, height = 230 }) {
+  const ref = useRef(null)
+  const [width, setWidth] = useState(500)
+  useEffect(() => {
+    if (!ref.current) return
+    const ro = new ResizeObserver(([e]) => setWidth(e.contentRect.width))
+    ro.observe(ref.current)
+    return () => ro.disconnect()
+  }, [])
+
+  if (!data.length) return null
+  const pad = { l: 52, r: 8, t: 12, b: 26 }
+  const cW  = Math.max(1, width - pad.l - pad.r)
+  const cH  = height - pad.t - pad.b
+  const minP = Math.min(...data.map(d => d.low))  * 0.9985
+  const maxP = Math.max(...data.map(d => d.high)) * 1.0015
+  const range = maxP - minP || 1
+  const toY  = v => pad.t + cH * (1 - (v - minP) / range)
+  const bw   = Math.max(2, cW / data.length * 0.55)
+  const n    = data.length
+  const showEvery = Math.max(1, Math.floor(n / 7))
+
+  return (
+    <div ref={ref} style={{ width: '100%' }}>
+      <svg width={width} height={height} style={{ display: 'block' }}>
+        {[0, 0.25, 0.5, 0.75, 1].map(t => {
+          const y = pad.t + cH * t
+          const v = maxP - t * range
+          return (
+            <g key={t}>
+              <line x1={pad.l} x2={width - pad.r} y1={y} y2={y} stroke={C.border} />
+              <text x={pad.l - 4} y={y + 4} textAnchor="end" fontSize={9} fill={C.muted}>
+                {v >= 1000 ? (v / 1000).toFixed(1) + 'K' : v.toFixed(v < 10 ? 2 : 0)}
+              </text>
+            </g>
+          )
+        })}
+        {data.map((d, i) => {
+          const x      = pad.l + (i + 0.5) * (cW / n)
+          const isUp   = d.close >= d.open
+          const col    = isUp ? C.green : C.red
+          const bodyT  = toY(Math.max(d.open, d.close))
+          const bodyB  = toY(Math.min(d.open, d.close))
+          return (
+            <g key={i}>
+              <line x1={x} x2={x} y1={toY(d.high)} y2={toY(d.low)} stroke={col} strokeWidth={1} />
+              <rect x={x - bw / 2} y={bodyT} width={bw} height={Math.max(1, bodyB - bodyT)} fill={col} rx={0.5} />
+            </g>
+          )
+        })}
+        {data.map((d, i) => {
+          if (i % showEvery !== 0) return null
+          return (
+            <text key={i} x={pad.l + (i + 0.5) * (cW / n)} y={height - 6} textAnchor="middle" fontSize={9} fill={C.muted}>
+              {d.date}
+            </text>
+          )
+        })}
+      </svg>
+    </div>
+  )
+}
+
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-.pd-root { font-family: 'Inter', sans-serif; background: ${C.bg}; min-height: 100vh; color: ${C.text}; }
-.pd-root * { box-sizing: border-box; }
+.pd-root { font-family:'Inter',sans-serif; background:${C.bg}; min-height:100vh; color:${C.text}; }
+.pd-root * { box-sizing:border-box; }
 .pd-nav { display:flex; align-items:center; justify-content:space-between; padding:14px 28px; border-bottom:1px solid ${C.border}; background:${C.surface}; position:sticky; top:0; z-index:10; }
 .pd-nav-left { display:flex; align-items:center; gap:10px; }
 .pd-logo { font-size:18px; font-weight:700; color:${C.blue}; letter-spacing:-.5px; }
@@ -112,6 +168,7 @@ const CSS = `
 .pd-btn { padding:6px 14px; border-radius:6px; font-size:13px; font-weight:500; border:none; cursor:pointer; transition:opacity .15s; }
 .pd-btn:hover { opacity:.85; }
 .pd-btn-ghost { background:transparent; border:1px solid ${C.border}; color:${C.subtext}; }
+.pd-btn-ghost.active { border-color:${C.blue}; color:${C.blue}; background:rgba(56,126,209,.08); }
 .pd-btn-primary { background:${C.blue}; color:#fff; }
 .pd-body { max-width:1280px; margin:0 auto; padding:28px 24px; }
 .pd-metric-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:28px; }
@@ -119,9 +176,11 @@ const CSS = `
 .pd-metric-label { font-size:11px; color:${C.muted}; text-transform:uppercase; letter-spacing:.6px; margin-bottom:4px; }
 .pd-metric-value { font-size:20px; font-weight:700; }
 .pd-metric-sub { font-size:12px; color:${C.muted}; margin-top:2px; }
-.pd-grid { display:grid; grid-template-columns:1fr 320px; gap:20px; margin-bottom:28px; }
-@media(max-width:900px){ .pd-grid { grid-template-columns:1fr; } }
-.pd-card { background:${C.surface}; border:1px solid ${C.border}; border-radius:12px; }
+.pd-grid { display:grid; grid-template-columns:1fr 340px; gap:20px; margin-bottom:20px; }
+@media(max-width:960px){ .pd-grid { grid-template-columns:1fr; } }
+.pd-bottom-row { display:flex; gap:20px; margin-bottom:28px; }
+@media(max-width:960px){ .pd-bottom-row { flex-direction:column; } }
+.pd-card { background:${C.surface}; border:1px solid ${C.border}; border-radius:12px; overflow:hidden; }
 .pd-card-header { padding:14px 18px; border-bottom:1px solid ${C.border}; display:flex; align-items:center; justify-content:space-between; }
 .pd-card-title { font-size:14px; font-weight:600; color:${C.text}; }
 .pd-card-body { padding:18px; }
@@ -133,10 +192,12 @@ const CSS = `
 .pd-table th { padding:10px 12px; text-align:right; font-size:11px; font-weight:600; color:${C.muted}; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid ${C.border}; cursor:pointer; user-select:none; white-space:nowrap; }
 .pd-table th:first-child { text-align:left; }
 .pd-table th:hover { color:${C.text}; }
-.pd-table td { padding:11px 12px; text-align:right; border-bottom:1px solid ${C.border}; color:${C.text}; }
+.pd-table td { padding:10px 12px; text-align:right; border-bottom:1px solid ${C.border}; color:${C.text}; transition:background .15s; }
 .pd-table td:first-child { text-align:left; font-weight:600; }
 .pd-table tr:last-child td { border-bottom:none; }
-.pd-table tr:hover td { background:rgba(255,255,255,.025); }
+.pd-table tbody tr { cursor:pointer; transition:background .12s; }
+.pd-table tbody tr:hover td { background:rgba(255,255,255,.025); }
+.pd-table tbody tr.pd-row-sel td { background:rgba(56,126,209,.09); }
 .pd-tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; font-weight:600; margin-left:6px; }
 .pd-tag-equity  { background:#1e3a5f; color:#60a5fa; }
 .pd-tag-elss    { background:#1a2e05; color:#86efac; }
@@ -154,14 +215,15 @@ const CSS = `
 .pd-alert { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:10px; font-size:13px; }
 .pd-alert-warn { background:#1c1400; border:1px solid #92400e; color:#fde68a; }
 .pd-alert-info { background:#0c1a2e; border:1px solid #1e40af; color:#93c5fd; }
-.pd-chat-wrap { background:${C.surface}; border:1px solid ${C.border}; border-radius:12px; }
-.pd-chat-msgs { padding:16px; min-height:200px; max-height:340px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
-.pd-chat-bubble { max-width:80%; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; }
+.pd-chat-wrap { background:${C.surface}; border:1px solid ${C.border}; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
+.pd-chat-msgs { padding:16px; min-height:200px; max-height:320px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; flex:1; }
+.pd-chat-bubble { max-width:82%; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.5; }
 .pd-chat-user { background:${C.blue}; color:#fff; align-self:flex-end; border-radius:10px 10px 2px 10px; }
 .pd-chat-ai { background:#161b22; border:1px solid ${C.border}; color:${C.text}; align-self:flex-start; border-radius:10px 10px 10px 2px; }
 .pd-chat-input-row { display:flex; gap:8px; padding:12px 16px; border-top:1px solid ${C.border}; }
 .pd-chat-input { flex:1; background:#161b22; border:1px solid ${C.border}; border-radius:8px; padding:8px 12px; color:${C.text}; font-size:13px; font-family:inherit; resize:none; }
 .pd-chat-input:focus { outline:none; border-color:${C.blue}; }
+.pd-chart-empty { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; min-height:260px; color:${C.muted}; font-size:13px; }
 .pd-gate { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; background:${C.bg}; padding:24px; }
 .pd-gate-card { background:${C.surface}; border:1px solid ${C.border}; border-radius:16px; padding:40px; max-width:420px; width:100%; text-align:center; }
 .pd-gate-logo { font-size:28px; font-weight:800; color:${C.blue}; margin-bottom:8px; }
@@ -176,11 +238,11 @@ const CSS = `
 .pd-sort-icon.active { opacity:1; color:${C.blue}; }
 .pd-banner-mock { display:flex; align-items:center; gap:10px; padding:10px 24px; background:#1c1200; border-bottom:1px solid #92400e; color:#fde68a; font-size:13px; }
 .pd-banner-live { display:flex; align-items:center; gap:8px; padding:10px 24px; background:#042010; border-bottom:1px solid #166534; color:#86efac; font-size:13px; }
+.pd-alloc-bar { height:6px; border-radius:3px; margin-top:4px; margin-bottom:12px; transition:width .4s ease; }
 `
 
 function ConnectScreen({ onMock }) {
   const [loading, setLoading] = useState(false)
-
   async function handleConnect() {
     setLoading(true)
     try {
@@ -191,7 +253,6 @@ function ConnectScreen({ onMock }) {
     setLoading(false)
     onMock()
   }
-
   return (
     <div className="pd-gate">
       <style>{CSS}</style>
@@ -208,20 +269,11 @@ function ConnectScreen({ onMock }) {
           <div className="pd-gate-feature"><span>✓</span> 80C optimisation alerts</div>
           <div className="pd-gate-feature"><span>✓</span> AI copilot with Indian tax context</div>
         </div>
-        <button
-          className="pd-btn pd-btn-primary"
-          style={{ width: '100%', padding: '12px', fontSize: 15 }}
-          onClick={handleConnect}
-          disabled={loading}
-        >
+        <button className="pd-btn pd-btn-primary" style={{ width: '100%', padding: '12px', fontSize: 15 }} onClick={handleConnect} disabled={loading}>
           {loading ? 'Redirecting…' : 'Connect Kite →'}
         </button>
         <div className="pd-gate-divider">or</div>
-        <button
-          className="pd-btn pd-btn-ghost"
-          style={{ width: '100%', padding: '10px' }}
-          onClick={onMock}
-        >
+        <button className="pd-btn pd-btn-ghost" style={{ width: '100%', padding: '10px' }} onClick={onMock}>
           View demo with mock data
         </button>
       </div>
@@ -233,26 +285,30 @@ export default function PortfolioDashboard() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [authState,    setAuthState]    = useState('checking')
-  const [useMockData,  setUseMockData]  = useState(false)
-  const [summary,      setSummary]      = useState(EMPTY_SUMMARY)
-  const [holdings,     setHoldings]     = useState([])
-  const [alerts,       setAlerts]       = useState([])
-  const [loading,      setLoading]      = useState(true)
-  const [refreshing,   setRefreshing]   = useState(false)
-  const [flashMap,     setFlashMap]     = useState({})
-  const prevPricesRef                   = useRef({})
-  const [sortKey,      setSortKey]      = useState('current_value')
-  const [sortDir,      setSortDir]      = useState(-1)
-  const [lastUpdated,  setLastUpdated]  = useState(null)
-  const [secondsAgo,   setSecondsAgo]   = useState('')
-  const [isPolling,    setIsPolling]    = useState(false)
-  const [chatHistory,  setChatHistory]  = useState([
+  const [authState,      setAuthState]      = useState('checking')
+  const [useMockData,    setUseMockData]    = useState(false)
+  const [summary,        setSummary]        = useState(EMPTY_SUMMARY)
+  const [holdings,       setHoldings]       = useState([])
+  const [alerts,         setAlerts]         = useState([])
+  const [loading,        setLoading]        = useState(true)
+  const [refreshing,     setRefreshing]     = useState(false)
+  const [flashMap,       setFlashMap]       = useState({})
+  const prevPricesRef                       = useRef({})
+  const [sortKey,        setSortKey]        = useState('current_value')
+  const [sortDir,        setSortDir]        = useState(-1)
+  const [lastUpdated,    setLastUpdated]    = useState(null)
+  const [secondsAgo,     setSecondsAgo]     = useState('')
+  const [isPolling,      setIsPolling]      = useState(false)
+  const [selectedHolding,setSelectedHolding]= useState(null)
+  const [chartType,      setChartType]      = useState('candle')
+  const [chartData,      setChartData]      = useState([])
+  const [chartLoading,   setChartLoading]   = useState(false)
+  const [chatHistory,    setChatHistory]    = useState([
     { role: 'assistant', content: "Hi! I'm your AI portfolio copilot. Ask me about your holdings, tax strategy, or rebalancing." }
   ])
-  const [chatInput,    setChatInput]    = useState('')
-  const [chatLoading,  setChatLoading]  = useState(false)
-  const chatEndRef                      = useRef(null)
+  const [chatInput,      setChatInput]      = useState('')
+  const [chatLoading,    setChatLoading]    = useState(false)
+  const chatEndRef                          = useRef(null)
 
   // Auth gate
   useEffect(() => {
@@ -260,22 +316,22 @@ export default function PortfolioDashboard() {
     const rt     = params.get('request_token')
     const status = params.get('status')
 
+    if (params.get('kite') === 'connected') {
+      localStorage.setItem(LS_KEY, '1')
+      window.history.replaceState({}, '', '/portfolio')
+      setAuthState('connected')
+      return
+    }
+
     if (rt && status === 'success') {
       fetch(`${API_BASE}/kite/callback?request_token=${rt}`)
         .then(r => r.json())
         .then(d => {
           window.history.replaceState({}, '', '/portfolio')
-          if (d.success) {
-            localStorage.setItem(LS_KEY, '1')
-            setAuthState('connected')
-          } else {
-            setAuthState('gate')
-          }
+          if (d.success) { localStorage.setItem(LS_KEY, '1'); setAuthState('connected') }
+          else setAuthState('gate')
         })
-        .catch(() => {
-          window.history.replaceState({}, '', '/portfolio')
-          setAuthState('gate')
-        })
+        .catch(() => { window.history.replaceState({}, '', '/portfolio'); setAuthState('gate') })
       return
     }
 
@@ -285,11 +341,22 @@ export default function PortfolioDashboard() {
       return
     }
 
-    if (localStorage.getItem(LS_KEY) === '1' || localStorage.getItem('kiteConnected') === 'true') {
-      setAuthState('connected')
-    } else {
-      setAuthState('gate')
-    }
+    fetch(`${API_BASE}/portfolio/summary?user_id=demo_user`)
+      .then(r => r.json())
+      .then(d => {
+        if (d?.summary?.is_live) {
+          localStorage.setItem(LS_KEY, '1')
+          setAuthState('connected')
+        } else if (localStorage.getItem(LS_KEY) === '1' || localStorage.getItem('kiteConnected') === 'true') {
+          setAuthState('connected')
+        } else {
+          setAuthState('gate')
+        }
+      })
+      .catch(() => {
+        if (localStorage.getItem(LS_KEY) === '1') setAuthState('connected')
+        else setAuthState('gate')
+      })
   }, [])
 
   const applyHoldings = useCallback((raw) => {
@@ -297,9 +364,8 @@ export default function PortfolioDashboard() {
     raw.forEach(h => {
       const prev = prevPricesRef.current[h.tradingsymbol]
       const curr = Number(h.last_price) || 0
-      if (prev !== undefined && curr !== prev) {
+      if (prev !== undefined && curr !== prev)
         newFlash[h.tradingsymbol] = curr > prev ? 'up' : 'down'
-      }
       prevPricesRef.current[h.tradingsymbol] = curr
     })
     if (Object.keys(newFlash).length) {
@@ -324,7 +390,7 @@ export default function PortfolioDashboard() {
         applyHoldings(MOCK_HOLDINGS)
       } else {
         const data = await fetchSummary()
-        const s = data.summary || data
+        const s    = data.summary || data
         const remaining_80c = s.remaining_80c != null
           ? s.remaining_80c
           : Math.max(0, 150000 - (s.elss_invested || 0) - (s.ppf_invested || 0))
@@ -339,28 +405,20 @@ export default function PortfolioDashboard() {
         setIsPolling(s.is_live || false)
         applyHoldings(data.holdings || [])
       }
-    } catch {
-      // keep stale data on error
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
+    } catch { /* keep stale */ }
+    finally { setLoading(false); setRefreshing(false) }
   }, [applyHoldings, useMockData])
 
   const active = authState === 'connected' || useMockData
 
-  useEffect(() => {
-    if (active) loadData(false)
-  }, [active])
+  useEffect(() => { if (active) loadData(false) }, [active])
 
-  // Summary poll 60s
   useEffect(() => {
     if (!active) return
     const id = setInterval(() => loadData(true), POLL_SUM)
     return () => clearInterval(id)
   }, [active, loadData])
 
-  // Live holdings poll 30s (only when Kite live)
   useEffect(() => {
     if (!isPolling) return
     const id = setInterval(async () => {
@@ -373,7 +431,6 @@ export default function PortfolioDashboard() {
     return () => clearInterval(id)
   }, [isPolling, applyHoldings])
 
-  // "Updated Xs ago" counter
   useEffect(() => {
     if (!lastUpdated) return
     const id = setInterval(() => {
@@ -383,8 +440,26 @@ export default function PortfolioDashboard() {
     return () => clearInterval(id)
   }, [lastUpdated])
 
-  // Chat scroll
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatHistory])
+
+  async function handleSelectHolding(h) {
+    setSelectedHolding(h)
+    setChartLoading(true)
+    try {
+      if (isPolling) {
+        const res = await fetch(`${API_BASE}/portfolio/historical?symbol=${h.tradingsymbol}&exchange=${h.exchange}&days=30`)
+        if (res.ok) {
+          const d = await res.json()
+          if (d.candles?.length) { setChartData(d.candles); setChartLoading(false); return }
+        }
+      }
+      setChartData(generateMockOHLCV(Number(h.last_price)))
+    } catch {
+      setChartData(generateMockOHLCV(Number(h.last_price)))
+    } finally {
+      setChartLoading(false)
+    }
+  }
 
   function toggleSort(key) {
     if (sortKey === key) setSortDir(d => -d)
@@ -392,8 +467,7 @@ export default function PortfolioDashboard() {
   }
 
   const sorted = [...holdings].sort((a, b) => {
-    if (sortKey === 'tradingsymbol')
-      return sortDir * a.tradingsymbol.localeCompare(b.tradingsymbol)
+    if (sortKey === 'tradingsymbol') return sortDir * a.tradingsymbol.localeCompare(b.tradingsymbol)
     return sortDir * ((Number(a[sortKey]) || 0) - (Number(b[sortKey]) || 0))
   })
 
@@ -415,35 +489,37 @@ export default function PortfolioDashboard() {
     }
   }
 
-  const alloc = summary.allocation || {}
-  const donutData = Object.entries(alloc)
-    .filter(([, v]) => (Number(v) || 0) > 0)
-    .map(([k, v]) => ({ name: k, value: Number(v) || 0 }))
-
-  const totalPnlColor = (summary.total_pnl || 0) >= 0 ? C.green : C.red
+  const alloc        = summary.allocation || {}
+  const allocTotal   = Object.values(alloc).reduce((s, v) => s + (Number(v) || 0), 0) || 1
+  const donutData    = Object.entries(alloc).filter(([, v]) => (Number(v) || 0) > 0).map(([k, v]) => ({ name: k, value: Number(v) || 0 }))
+  const totalPnlPos  = (summary.total_pnl || 0) >= 0
+  const totalPnlColor = totalPnlPos ? C.green : C.red
 
   function tagClass(tag) {
     const t = (tag || '').toLowerCase()
-    if (t === 'elss')    return 'pd-tag pd-tag-elss'
-    if (t === 'sgb')     return 'pd-tag pd-tag-sgb'
+    if (t === 'elss') return 'pd-tag pd-tag-elss'
+    if (t === 'sgb')  return 'pd-tag pd-tag-sgb'
     if (t === 'debt' || t === 'ppf')    return 'pd-tag pd-tag-debt'
     if (t === 'pension' || t === 'nps') return 'pd-tag pd-tag-pension'
     return 'pd-tag pd-tag-equity'
   }
 
   function Th({ k, label }) {
-    const active = sortKey === k
+    const isActive = sortKey === k
     return (
       <th onClick={() => toggleSort(k)}>
         {label}
-        <span className={`pd-sort-icon ${active ? 'active' : ''}`}>
-          {active ? (sortDir === -1 ? ' ↓' : ' ↑') : ' ⇅'}
+        <span className={`pd-sort-icon ${isActive ? 'active' : ''}`}>
+          {isActive ? (sortDir === -1 ? ' ↓' : ' ↑') : ' ⇅'}
         </span>
       </th>
     )
   }
 
-  // ── Auth states ──────────────────────────────────────────────────────────────
+  // Chart title color based on selected holding's day change
+  const selDayChg = selectedHolding ? (Number(selectedHolding.change_percent) || 0) : 0
+  const selDayCol = selDayChg >= 0 ? C.green : C.red
+
   if (authState === 'checking') {
     return (
       <div style={{ background: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -454,11 +530,7 @@ export default function PortfolioDashboard() {
   }
 
   if (authState === 'gate' && !useMockData) {
-    return (
-      <ConnectScreen
-        onMock={() => { setUseMockData(true); setAuthState('connected') }}
-      />
-    )
+    return <ConnectScreen onMock={() => { setUseMockData(true); setAuthState('connected') }} />
   }
 
   return (
@@ -478,17 +550,11 @@ export default function PortfolioDashboard() {
           <button className="pd-btn pd-btn-ghost" onClick={() => loadData(true)} disabled={refreshing}>
             {refreshing ? '⟳ Refreshing…' : '⟳ Refresh'}
           </button>
-          <button className="pd-btn pd-btn-ghost" onClick={() => navigate('/invest')}>
-            Marketplace
-          </button>
+          <button className="pd-btn pd-btn-ghost" onClick={() => navigate('/invest')}>Marketplace</button>
           {!useMockData && (
             <button className="pd-btn pd-btn-ghost" onClick={() => {
-              localStorage.removeItem(LS_KEY)
-              localStorage.removeItem('kiteConnected')
-              setAuthState('gate')
-            }}>
-              Disconnect
-            </button>
+              localStorage.removeItem(LS_KEY); localStorage.removeItem('kiteConnected'); setAuthState('gate')
+            }}>Disconnect</button>
           )}
         </div>
       </nav>
@@ -496,19 +562,9 @@ export default function PortfolioDashboard() {
       {/* Mode banner */}
       {useMockData ? (
         <div className="pd-banner-mock">
-          <span>⚠</span>
-          Showing demo data — connect Kite for your live portfolio
-          <button
-            className="pd-btn pd-btn-primary"
-            style={{ marginLeft: 'auto', padding: '4px 12px', fontSize: 12 }}
-            onClick={async () => {
-              try {
-                const res = await fetch(`${API_BASE}/kite/login-url`)
-                const data = await res.json()
-                if (data.url) window.location.href = data.url
-              } catch {}
-            }}
-          >
+          <span>⚠</span> Showing demo data — connect Kite for your live portfolio
+          <button className="pd-btn pd-btn-primary" style={{ marginLeft: 'auto', padding: '4px 12px', fontSize: 12 }}
+            onClick={async () => { try { const r = await fetch(`${API_BASE}/kite/login-url`); const d = await r.json(); if (d.url) window.location.href = d.url } catch {} }}>
             Connect Kite →
           </button>
         </div>
@@ -521,12 +577,10 @@ export default function PortfolioDashboard() {
 
       <div className="pd-body">
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: C.muted }}>
-            Loading portfolio…
-          </div>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: C.muted }}>Loading portfolio…</div>
         ) : (
           <>
-            {/* Metric Strip */}
+            {/* ── Metric Strip ── */}
             <div className="pd-metric-strip">
               <div className="pd-metric">
                 <div className="pd-metric-label">Portfolio Value</div>
@@ -536,15 +590,15 @@ export default function PortfolioDashboard() {
               <div className="pd-metric">
                 <div className="pd-metric-label">Total P&L</div>
                 <div className="pd-metric-value" style={{ color: totalPnlColor }}>
-                  {fmt(summary.total_pnl)}
+                  {totalPnlPos ? '▲ ' : '▼ '}{fmt(Math.abs(summary.total_pnl))}
                 </div>
-                <div className="pd-metric-sub" style={{ color: totalPnlColor }}>
-                  {fmtPct(summary.xirr_pct)} overall
-                </div>
+                <div className="pd-metric-sub" style={{ color: totalPnlColor }}>{fmtPct(summary.xirr_pct)} overall</div>
               </div>
               <div className="pd-metric">
                 <div className="pd-metric-label">LTCG This FY</div>
-                <div className="pd-metric-value">{fmt(summary.ltcg_this_fy)}</div>
+                <div className="pd-metric-value" style={{ color: (summary.ltcg_this_fy || 0) > 80000 ? C.red : C.text }}>
+                  {fmt(summary.ltcg_this_fy)}
+                </div>
                 <div className="pd-metric-sub">₹1L exempt limit</div>
               </div>
               <div className="pd-metric">
@@ -563,7 +617,7 @@ export default function PortfolioDashboard() {
               </div>
             </div>
 
-            {/* Alerts */}
+            {/* ── Alerts ── */}
             {alerts.length > 0 && (
               <div className="pd-alerts">
                 {alerts.map((a, i) => (
@@ -575,13 +629,13 @@ export default function PortfolioDashboard() {
               </div>
             )}
 
-            {/* Main Grid */}
+            {/* ── Main Grid: Holdings | Chart ── */}
             <div className="pd-grid">
               {/* Holdings Table */}
               <div className="pd-card">
                 <div className="pd-card-header">
                   <span className="pd-card-title">Holdings ({sorted.length})</span>
-                  <span style={{ fontSize: 12, color: C.muted }}>Click headers to sort</span>
+                  <span style={{ fontSize: 12, color: C.muted }}>Click a row to view chart</span>
                 </div>
                 <div className="pd-table-wrap">
                   <table className="pd-table">
@@ -589,34 +643,42 @@ export default function PortfolioDashboard() {
                       <tr>
                         <Th k="tradingsymbol" label="Symbol" />
                         <Th k="quantity"      label="Qty" />
-                        <Th k="average_price" label="Avg Cost" />
                         <Th k="last_price"    label="LTP" />
-                        <Th k="current_value" label="Curr Val" />
+                        <Th k="change_percent"label="Day %" />
+                        <Th k="current_value" label="Value" />
                         <Th k="pnl"           label="P&L" />
                         <Th k="return_pct"    label="Return" />
                       </tr>
                     </thead>
                     <tbody>
                       {sorted.map(h => {
-                        const sym   = h.tradingsymbol
-                        const flash = flashMap[sym]
-                        const pnl   = Number(h.pnl) || 0
-                        const ret   = Number(h.return_pct) || 0
+                        const sym      = h.tradingsymbol
+                        const flash    = flashMap[sym]
+                        const pnl      = Number(h.pnl) || 0
+                        const ret      = Number(h.return_pct) || 0
+                        const dayChg   = Number(h.change_percent) || 0
+                        const isSelected = selectedHolding?.tradingsymbol === sym
                         return (
-                          <tr key={sym}>
+                          <tr
+                            key={sym}
+                            className={isSelected ? 'pd-row-sel' : ''}
+                            onClick={() => handleSelectHolding(h)}
+                          >
                             <td>
                               {sym}
-                              {h.tag && (
-                                <span className={tagClass(h.tag)}>{h.tag}</span>
-                              )}
+                              {h.tag && <span className={tagClass(h.tag)}>{h.tag}</span>}
                             </td>
                             <td>{fmtNum(h.quantity)}</td>
-                            <td>{fmt(h.average_price)}</td>
                             <td className={flash === 'up' ? 'fu' : flash === 'down' ? 'fd' : ''}>
                               {fmt(h.last_price)}
                             </td>
+                            <td className={dayChg >= 0 ? 'pd-pos' : 'pd-neg'}>
+                              {dayChg >= 0 ? '▲' : '▼'} {Math.abs(dayChg).toFixed(2)}%
+                            </td>
                             <td>{fmt(h.current_value)}</td>
-                            <td className={pnl >= 0 ? 'pd-pos' : 'pd-neg'}>{fmt(pnl)}</td>
+                            <td className={pnl >= 0 ? 'pd-pos' : 'pd-neg'}>
+                              {pnl >= 0 ? '▲' : '▼'} {fmt(Math.abs(pnl))}
+                            </td>
                             <td className={ret >= 0 ? 'pd-pos' : 'pd-neg'}>{fmtPct(ret)}</td>
                           </tr>
                         )
@@ -626,134 +688,137 @@ export default function PortfolioDashboard() {
                 </div>
               </div>
 
-              {/* Right Column */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* Allocation Donut */}
-                <div className="pd-card">
-                  <div className="pd-card-header">
-                    <span className="pd-card-title">Allocation</span>
-                  </div>
-                  <div className="pd-card-body">
-                    {donutData.length > 0 ? (
-                      <>
-                        <ResponsiveContainer width="100%" height={180}>
-                          <PieChart>
-                            <Pie
-                              data={donutData}
-                              dataKey="value"
-                              innerRadius={55}
-                              outerRadius={80}
-                              paddingAngle={2}
-                            >
-                              {donutData.map(entry => (
-                                <Cell key={entry.name} fill={DONUT_COLORS[entry.name] || '#555'} />
-                              ))}
-                            </Pie>
+              {/* Chart Panel */}
+              <div className="pd-card">
+                {selectedHolding ? (
+                  <>
+                    <div className="pd-card-header">
+                      <div>
+                        <span className="pd-card-title">{selectedHolding.tradingsymbol}</span>
+                        <span style={{ marginLeft: 10, fontSize: 13, color: selDayCol, fontWeight: 600 }}>
+                          {selDayChg >= 0 ? '▲' : '▼'} {fmt(selectedHolding.last_price)}
+                          {'  '}{fmtPct(selDayChg)}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className={`pd-btn pd-btn-ghost ${chartType === 'candle' ? 'active' : ''}`} style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setChartType('candle')}>
+                          Candlestick
+                        </button>
+                        <button className={`pd-btn pd-btn-ghost ${chartType === 'line' ? 'active' : ''}`} style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setChartType('line')}>
+                          Line
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ padding: '12px 8px 8px' }}>
+                      {chartLoading ? (
+                        <div style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 13 }}>Loading chart…</div>
+                      ) : chartType === 'candle' ? (
+                        <CandlestickChart data={chartData} height={230} />
+                      ) : (
+                        <ResponsiveContainer width="100%" height={230}>
+                          <LineChart data={chartData} margin={{ left: 8, right: 8, top: 8, bottom: 8 }}>
+                            <CartesianGrid stroke={C.border} strokeDasharray="3 3" />
+                            <XAxis dataKey="date" tick={{ fontSize: 9, fill: C.muted }} interval="preserveStartEnd" />
+                            <YAxis tick={{ fontSize: 9, fill: C.muted }} domain={['auto', 'auto']} tickFormatter={v => v >= 1000 ? (v/1000).toFixed(1)+'K' : v} width={44} />
                             <Tooltip
-                              formatter={v => fmt(v)}
-                              contentStyle={{
-                                background: C.surface,
-                                border: `1px solid ${C.border}`,
-                                borderRadius: 6,
-                                fontSize: 12,
-                              }}
+                              contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12 }}
+                              formatter={v => [fmt(v), 'Close']}
                             />
-                          </PieChart>
+                            <Line type="monotone" dataKey="close" stroke={selDayChg >= 0 ? C.green : C.red} dot={false} strokeWidth={2} />
+                          </LineChart>
                         </ResponsiveContainer>
-                        <div className="pd-donut-labels">
-                          {donutData.map(d => (
-                            <div key={d.name} className="pd-donut-row">
-                              <span>
-                                <span
-                                  className="pd-donut-dot"
-                                  style={{ background: DONUT_COLORS[d.name] || '#555' }}
-                                />
-                                {d.name.charAt(0).toUpperCase() + d.name.slice(1)}
-                              </span>
-                              <span style={{ color: C.subtext }}>{fmt(d.value)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{ textAlign: 'center', color: C.muted, padding: '40px 0', fontSize: 13 }}>
-                        No allocation data
-                      </div>
-                    )}
+                      )}
+                      <div style={{ fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 4 }}>Last 30 days</div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="pd-chart-empty">
+                    <span style={{ fontSize: 28 }}>📈</span>
+                    <span>Click any holding to view its chart</span>
                   </div>
-                </div>
-
-                {/* Tax Summary */}
-                <div className="pd-card">
-                  <div className="pd-card-header">
-                    <span className="pd-card-title">Tax Summary</span>
-                  </div>
-                  <div className="pd-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[
-                      { label: 'ELSS Invested',  value: fmt(summary.elss_invested),  sub: '80C qualifying' },
-                      { label: 'PPF Invested',   value: fmt(summary.ppf_invested),   sub: '80C qualifying' },
-                      { label: 'Remaining 80C',  value: fmt(summary.remaining_80c),  sub: 'invest before Mar 31',
-                        hiColor: (summary.remaining_80c || 0) > 0 ? C.gold : C.green },
-                      { label: 'LTCG This FY',   value: fmt(summary.ltcg_this_fy),   sub: '₹1L exempt',
-                        hiColor: (summary.ltcg_this_fy || 0) > 80000 ? C.red : undefined },
-                      { label: 'STCG Exposure',  value: fmt(summary.stcg_exposure),  sub: 'taxed at 20%' },
-                    ].map(row => (
-                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div>
-                          <div style={{ fontSize: 12, color: C.muted }}>{row.label}</div>
-                          <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{row.sub}</div>
-                        </div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: row.hiColor || C.text }}>
-                          {row.value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* AI Copilot */}
-            <div className="pd-chat-wrap">
-              <div className="pd-card-header">
-                <span className="pd-card-title">AI Copilot</span>
-                <span style={{ fontSize: 12, color: C.muted }}>India tax context · Groq llama3-70b</span>
+            {/* ── Bottom Row: AI Copilot + Allocation ── */}
+            <div className="pd-bottom-row">
+              {/* AI Copilot — 60% */}
+              <div className="pd-chat-wrap" style={{ flex: '0 0 60%', minWidth: 0 }}>
+                <div className="pd-card-header">
+                  <span className="pd-card-title">AI Copilot</span>
+                  <span style={{ fontSize: 12, color: C.muted }}>India tax context</span>
+                </div>
+                <div className="pd-chat-msgs">
+                  {chatHistory.map((m, i) => (
+                    <div key={i} className={`pd-chat-bubble ${m.role === 'user' ? 'pd-chat-user' : 'pd-chat-ai'}`}>
+                      {m.content}
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div className="pd-chat-bubble pd-chat-ai" style={{ color: C.muted }}>Thinking…</div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+                <form className="pd-chat-input-row" onSubmit={handleChat}>
+                  <textarea
+                    className="pd-chat-input"
+                    rows={1}
+                    placeholder="Ask about LTCG, 80C, rebalancing…"
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChat() } }}
+                  />
+                  <button type="submit" className="pd-btn pd-btn-primary" disabled={chatLoading || !chatInput.trim()}>Send</button>
+                </form>
               </div>
-              <div className="pd-chat-msgs">
-                {chatHistory.map((m, i) => (
-                  <div
-                    key={i}
-                    className={`pd-chat-bubble ${m.role === 'user' ? 'pd-chat-user' : 'pd-chat-ai'}`}
-                  >
-                    {m.content}
-                  </div>
-                ))}
-                {chatLoading && (
-                  <div className="pd-chat-bubble pd-chat-ai" style={{ color: C.muted }}>
-                    Thinking…
-                  </div>
-                )}
-                <div ref={chatEndRef} />
+
+              {/* Allocation — 40% */}
+              <div className="pd-card" style={{ flex: '1 1 0', minWidth: 0 }}>
+                <div className="pd-card-header">
+                  <span className="pd-card-title">Allocation</span>
+                </div>
+                <div className="pd-card-body">
+                  {donutData.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <PieChart>
+                          <Pie data={donutData} dataKey="value" innerRadius={48} outerRadius={72} paddingAngle={2}>
+                            {donutData.map(entry => (
+                              <Cell key={entry.name} fill={DONUT_COLORS[entry.name] || '#555'} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={v => fmt(v)}
+                            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 12 }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                        {donutData.map(d => {
+                          const pct = ((d.value / allocTotal) * 100).toFixed(1)
+                          const col = DONUT_COLORS[d.name] || '#555'
+                          return (
+                            <div key={d.name}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 3 }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: col, display: 'inline-block' }} />
+                                  {d.name.charAt(0).toUpperCase() + d.name.slice(1)}
+                                </span>
+                                <span style={{ color: C.subtext }}>{pct}% · {fmt(d.value)}</span>
+                              </div>
+                              <div style={{ height: 5, background: C.border, borderRadius: 3, overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${pct}%`, background: col, borderRadius: 3, transition: 'width .4s ease' }} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: C.muted, padding: '40px 0', fontSize: 13 }}>No allocation data</div>
+                  )}
+                </div>
               </div>
-              <form className="pd-chat-input-row" onSubmit={handleChat}>
-                <textarea
-                  className="pd-chat-input"
-                  rows={1}
-                  placeholder="Ask about LTCG, 80C, rebalancing…"
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleChat() }
-                  }}
-                />
-                <button
-                  type="submit"
-                  className="pd-btn pd-btn-primary"
-                  disabled={chatLoading || !chatInput.trim()}
-                >
-                  Send
-                </button>
-              </form>
             </div>
           </>
         )}
