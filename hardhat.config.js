@@ -35,7 +35,12 @@ function loadPrivateKey() {
   return normalized;
 }
 
-const DEPLOYER_PRIVATE_KEY = loadPrivateKey();
+// Only load private key when deploying to a real network
+const isLocalNetwork = !process.env.HARDHAT_NETWORK ||
+  ["hardhat", "localhost"].includes(process.env.HARDHAT_NETWORK);
+const DEPLOYER_PRIVATE_KEY = isLocalNetwork
+  ? "0x" + "0".repeat(64)  // dummy key — never used locally
+  : loadPrivateKey();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

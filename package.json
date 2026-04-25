@@ -4,18 +4,18 @@
   "description": "Nuvest smart contracts — ERC721 invoice token + escrow on Polygon",
   "private": true,
   "scripts": {
-    "compile":        "hardhat compile",
-    "test":           "hardhat test",
-    "deploy:local":   "hardhat run scripts/deploy.js --network localhost",
-    "deploy:amoy":    "hardhat run scripts/deploy.js --network amoy",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
+    "deploy:amoy": "hardhat run scripts/deploy.js --network amoy",
     "deploy:polygon": "hardhat run scripts/deploy.js --network polygon",
-    "node":           "hardhat node",
-    "clean":          "hardhat clean"
+    "node": "hardhat node",
+    "clean": "hardhat clean"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.28.6"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2"

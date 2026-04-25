@@ -86,11 +86,15 @@ export default function InvestorMarketplace() {
   async function handleConnectKite() {
     try {
       const res = await fetch(`${API_BASE}/kite/login-url`)
+      if (res.status === 503) {
+        alert('Kite Connect not configured — add KITE_API_KEY to .env and restart the backend.')
+        return
+      }
       if (!res.ok) throw new Error('no url')
       const { url } = await res.json()
       window.location.href = url
     } catch {
-      alert('Kite Connect not configured. Add KITE_API_KEY to .env to enable live data.')
+      alert('Could not reach backend. Make sure the server is running on port 8000.')
     }
   }
 
