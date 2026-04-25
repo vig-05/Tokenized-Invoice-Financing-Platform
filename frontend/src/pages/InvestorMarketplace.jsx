@@ -4,7 +4,7 @@ import { connectWallet, getTotalSupply, getInvoiceData, getExpectedReturnBps, fu
 import { ethers } from 'ethers'
 import { fetchSummary } from '../utils/api'
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8001'
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 
 const s = {
   page: { minHeight: '100vh', padding: '80px 24px 60px', maxWidth: 960, margin: '0 auto' },
