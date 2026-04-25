@@ -134,7 +134,7 @@ nuvest/
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/nityaswadi21/Tokenized-Invoice-Financing-Platform
+git clone https://github.com/vig-05/Tokenized-Invoice-Financing-Platform
 cd Tokenized-Invoice-Financing-Platform
 
 # Hardhat + contract tooling
