@@ -15,6 +15,7 @@ const s = {
   card:    { padding: '24px 28px', border: '1px solid var(--line)', borderRadius: 16, background: 'rgba(14,23,48,.55)', marginBottom: 24, backdropFilter: 'blur(8px)' },
   label:   { fontSize: 12, color: 'var(--ink-2)', marginBottom: 8, letterSpacing: '0.05em', fontWeight: 500 },
   input:   { width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line-2)', background: 'rgba(255,255,255,.04)', color: 'var(--ink-0)', fontSize: 14, fontFamily: 'inherit', outline: 'none', marginBottom: 16 },
+  select:  { width: '100%', padding: '12px 16px', borderRadius: 10, border: '1px solid var(--line-2)', background: '#0e1730', color: '#e9edf7', fontSize: 14, fontFamily: 'inherit', outline: 'none', marginBottom: 16, appearance: 'none', cursor: 'pointer' },
   row:     { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 },
   btn:     { padding: '12px 24px', borderRadius: 999, border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 8 },
   btnSec:  { padding: '12px 24px', borderRadius: 999, border: '1px solid var(--line-2)', background: 'rgba(255,255,255,.03)', color: 'var(--ink-1)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' },
@@ -135,13 +136,13 @@ export default function SMEDashboard() {
           <form onSubmit={handleScore}>
             <div style={s.label}>Buyer / Corporate name</div>
             <select
-              style={{ ...s.input, appearance: 'none', cursor: 'pointer' }}
+              style={s.select}
               value={form.buyer}
               onChange={e => setForm(f => ({ ...f, buyer: e.target.value }))}
               required
             >
-              <option value="">Select buyer…</option>
-              {BUYERS.map(b => <option key={b} value={b}>{b}</option>)}
+              <option value="" style={{ background: '#0e1730', color: '#8894b3' }}>Select buyer…</option>
+              {BUYERS.map(b => <option key={b} value={b} style={{ background: '#0e1730', color: '#e9edf7' }}>{b}</option>)}
             </select>
 
             <div style={s.row}>
